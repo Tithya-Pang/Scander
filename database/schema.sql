@@ -1,55 +1,91 @@
 -- ==========================================
 -- SCANDER DATABASE SCHEMA
 -- QR Code Self-Order Restaurant System
+-- Version 1.0
 -- ==========================================
 
 
+-- =========================
 -- 1. Restaurant
+-- =========================
+
 CREATE TABLE restaurant (
+
     restaurant_id SERIAL PRIMARY KEY,
+
     name VARCHAR(100) NOT NULL,
+
     address TEXT,
+
     phone VARCHAR(20),
+
     logo TEXT,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
 );
 
 
 
--- 2. Restaurant Table
+-- =========================
+-- 2. Restaurant Tables
+-- =========================
+
 CREATE TABLE restaurant_table (
+
     table_id SERIAL PRIMARY KEY,
+
     restaurant_id INT NOT NULL,
+
     table_number VARCHAR(20) NOT NULL,
+
     qr_code VARCHAR(255) UNIQUE NOT NULL,
-    status VARCHAR(20) DEFAULT 'AVAILABLE',
+
+    status VARCHAR(20)
+        DEFAULT 'AVAILABLE',
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
+
     FOREIGN KEY (restaurant_id)
-    REFERENCES restaurant(restaurant_id)
+        REFERENCES restaurant(restaurant_id)
+
 );
 
 
 
+-- =========================
 -- 3. Table Session
+-- =========================
+
 CREATE TABLE table_session (
+
     session_id SERIAL PRIMARY KEY,
+
     table_id INT NOT NULL,
+
     session_status VARCHAR(20)
         DEFAULT 'ACTIVE',
 
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
     ended_at TIMESTAMP,
 
 
-    FOREIGN KEY (table_id)
-    REFERENCES restaurant_table(table_id)
+    FOREIGN KEY(table_id)
+        REFERENCES restaurant_table(table_id)
+
 );
 
 
 
--- 4. Users (Admin / Kitchen / Cashier)
+-- =========================
+-- 4. Users
+-- Admin / Kitchen / Cashier
+-- =========================
+
 CREATE TABLE users (
+
     user_id SERIAL PRIMARY KEY,
 
     name VARCHAR(100) NOT NULL,
@@ -64,11 +100,15 @@ CREATE TABLE users (
         NOT NULL,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
 );
 
 
 
+-- =========================
 -- 5. Category
+-- =========================
+
 CREATE TABLE category (
 
     category_id SERIAL PRIMARY KEY,
@@ -80,17 +120,21 @@ CREATE TABLE category (
 
     description TEXT,
 
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
 
-    FOREIGN KEY (restaurant_id)
-    REFERENCES restaurant(restaurant_id)
+    FOREIGN KEY(restaurant_id)
+        REFERENCES restaurant(restaurant_id)
 
 );
 
 
 
+-- =========================
 -- 6. Menu Item
+-- =========================
+
 CREATE TABLE menu_item (
 
     item_id SERIAL PRIMARY KEY,
@@ -122,17 +166,19 @@ CREATE TABLE menu_item (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
 
-    FOREIGN KEY (category_id)
-    REFERENCES category(category_id)
+    FOREIGN KEY(category_id)
+        REFERENCES category(category_id)
 
 );
 
 
 
+-- =========================
 -- 7. Menu Variant
 -- Example:
--- Iced Latte
+-- Latte
 -- Medium / Large
+-- =========================
 
 CREATE TABLE menu_variant (
 
@@ -141,21 +187,25 @@ CREATE TABLE menu_variant (
     item_id INT NOT NULL,
 
 
-    size VARCHAR(50),
+    size VARCHAR(50)
+        NOT NULL,
 
 
     extra_price DECIMAL(10,2)
         DEFAULT 0,
 
 
-    FOREIGN KEY (item_id)
-    REFERENCES menu_item(item_id)
+    FOREIGN KEY(item_id)
+        REFERENCES menu_item(item_id)
 
 );
 
 
 
+-- =========================
 -- 8. Orders
+-- =========================
+
 CREATE TABLE orders (
 
     order_id SERIAL PRIMARY KEY,
@@ -178,14 +228,17 @@ CREATE TABLE orders (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
 
-    FOREIGN KEY (session_id)
-    REFERENCES table_session(session_id)
+    FOREIGN KEY(session_id)
+        REFERENCES table_session(session_id)
 
 );
 
 
 
+-- =========================
 -- 9. Order Items
+-- =========================
+
 CREATE TABLE order_item (
 
     order_item_id SERIAL PRIMARY KEY,
@@ -212,21 +265,59 @@ CREATE TABLE order_item (
 
 
     FOREIGN KEY(order_id)
-    REFERENCES orders(order_id),
+        REFERENCES orders(order_id),
 
 
     FOREIGN KEY(item_id)
-    REFERENCES menu_item(item_id),
+        REFERENCES menu_item(item_id),
 
 
     FOREIGN KEY(variant_id)
-    REFERENCES menu_variant(variant_id)
+        REFERENCES menu_variant(variant_id)
 
 );
 
 
 
--- 10. Payment
+-- =========================
+-- 10. Order Status History
+-- =========================
+
+CREATE TABLE order_status_history (
+
+    history_id SERIAL PRIMARY KEY,
+
+
+    order_id INT NOT NULL,
+
+
+    user_id INT,
+
+
+    old_status VARCHAR(30),
+
+
+    new_status VARCHAR(30)
+        NOT NULL,
+
+
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+
+    FOREIGN KEY(order_id)
+        REFERENCES orders(order_id),
+
+
+    FOREIGN KEY(user_id)
+        REFERENCES users(user_id)
+
+);
+
+
+
+-- =========================
+-- 11. Payment
+-- =========================
 
 CREATE TABLE payment (
 
@@ -254,13 +345,15 @@ CREATE TABLE payment (
 
 
     FOREIGN KEY(order_id)
-    REFERENCES orders(order_id)
+        REFERENCES orders(order_id)
 
 );
 
 
 
--- 11. Receipt
+-- =========================
+-- 12. Receipt
+-- =========================
 
 CREATE TABLE receipt (
 
@@ -278,6 +371,6 @@ CREATE TABLE receipt (
 
 
     FOREIGN KEY(payment_id)
-    REFERENCES payment(payment_id)
+        REFERENCES payment(payment_id)
 
 );
