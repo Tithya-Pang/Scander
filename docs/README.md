@@ -1,35 +1,99 @@
 # Scander
 
-QR Code Self-Order and Digital Menu System
+## QR Code Self-Order and Digital Menu System
 
-## Description
+## Project Overview
 
-Scander is a restaurant management platform that allows customers
-to scan QR codes, browse menus, place orders, and track order status.
+Scander is a restaurant digital ordering platform that allows customers to scan a QR code placed on their table, access a digital menu, place orders, track order status, and complete payment through a digital system.
 
-The system includes:
-
-- Customer ordering interface
-- Kitchen order management
-- Admin menu management
-- Restaurant analytics
+The system aims to improve restaurant operations by reducing manual ordering processes, minimizing order mistakes, and improving communication between customers, kitchen staff, and restaurant administrators.
 
 
-## Users
+## Main Users
 
-### Customer
-- Scan QR code
-- Browse menu
-- Place order
-- Track order
+The Scander system consists of three main users:
+
+### 1. Customer
+
+Customers do not need to install an application.
+
+The customer workflow:
+
+- Enter restaurant
+- Sit at a table
+- Scan QR code on the table
+- Access Scander web system
+- Browse digital menu
+- Add items to cart
+- Submit order
+- Track order status
+- Complete payment
 
 
-### Kitchen Staff
+### 2. Kitchen Staff
+
+Kitchen staff manage incoming customer orders.
+
+Main responsibilities:
+
+- Login to kitchen dashboard
 - View incoming orders
+- Accept orders
 - Update order status
+- Monitor food preparation progress
 
 
-### Admin
-- Manage menu
-- Manage categories
+### 3. Administrator
+
+Administrators manage restaurant operations.
+
+Main responsibilities:
+
+- Manage menu categories
+- Manage menu items
+- Manage table QR codes
 - Monitor orders
+- Manage payment records
+- View restaurant reports
+
+
+# Project Objectives
+
+The objectives of Scander are:
+
+- Provide a QR-based ordering experience
+- Replace traditional paper menus
+- Reduce ordering mistakes
+- Improve kitchen communication
+- Provide real-time order tracking
+- Support digital payment processing
+- Provide restaurant management tools
+
+
+# Technology Stack
+
+## Frontend
+
+- React.js
+- Vite
+- Tailwind CSS
+- Responsive Web Design
+
+
+## Backend
+
+- Node.js
+- Express.js
+- REST API
+
+
+## Database
+
+- PostgreSQL
+
+
+## Development Tools
+
+- GitHub
+- Visual Studio Code
+- Postman
