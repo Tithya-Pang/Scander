@@ -1,0 +1,2 @@
+import StatusBadge from '../common/StatusBadge';
+export default function OrderCard({ order, onNext }) { return <article className="order-card"><div className="order-top"><strong>{order.id}</strong><StatusBadge status={order.status}/></div><p className="muted">Table {order.table} · {order.time}</p><ul>{order.items.map((item,i)=><li key={i}>{item}</li>)}</ul>{onNext&&<button className="btn btn-primary btn-small" onClick={()=>onNext(order.id)}>Move to next stage</button>}</article>; }

@@ -1,0 +1,1 @@
+export default function Placeholder({ title }) { return <section><span className="eyebrow">SCANDER</span><h1>{title}</h1><div className="card"><p>This screen is ready for your team to implement.</p><p className="muted">Frontend scaffold only — no live API is connected.</p></div></section>; }

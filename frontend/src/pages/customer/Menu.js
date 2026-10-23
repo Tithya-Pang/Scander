@@ -1,0 +1,4 @@
+import { useState } from 'react';
+import MenuCard from '../../components/customer/MenuCard';
+const items=[{id:1,name:'Iced Latte',description:'Espresso, milk and ice',price:3.5,icon:'☕'},{id:2,name:'Chicken Sandwich',description:'Grilled chicken and fresh vegetables',price:5.25,icon:'🥪'},{id:3,name:'Fried Rice',description:'House-style rice with vegetables',price:4.5,icon:'🍚'}];
+export default function Menu(){const [count,setCount]=useState(0);return <section><span className="eyebrow">SCANDER MENU</span><h1>Explore our menu</h1><p className="muted">Sample items · Added to demo counter: {count}</p><div className="menu-grid">{items.map(item=><MenuCard key={item.id} item={item} onAdd={()=>setCount(n=>n+1)}/>)}</div><p className="muted note">The cart is not yet connected to this demo counter.</p></section>}

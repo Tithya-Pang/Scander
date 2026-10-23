@@ -1,0 +1,2 @@
+import OrderCard from './OrderCard';
+export default function KanbanColumn({ title, orders, onNext }) { return <section className="kanban-column"><div className="kanban-heading"><h2>{title}</h2><span className="count">{orders.length}</span></div><div className="kanban-items">{orders.length?orders.map(order=><OrderCard key={order.id} order={order} onNext={onNext}/>):<p className="muted">No orders</p>}</div></section>; }

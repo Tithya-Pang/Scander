@@ -1,0 +1,1 @@
+export default function Cart(){return <section><span className="eyebrow">CUSTOMER</span><h1>Your Cart</h1><div className="card"><p>Your cart is empty.</p><p className="muted">Shared cart state will be implemented next.</p></div></section>}
