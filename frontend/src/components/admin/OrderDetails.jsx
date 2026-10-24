@@ -1,11 +1,51 @@
 
+import { useEffect } from 'react';
+import Icon from '../common/Icon';
+import {
+  getOrderStage,
+  orderTotals,
+  formatDate,
+  formatClock,
+  dishCount
+} from '../../data/kitchenOrders';
+
+const labels = {
+  received: 'Received',
+  preparing: 'Preparing',
+  ready: 'Ready',
+  completed: 'Completed'
+};
+
+const money = value => `$${value.toFixed(2)}`;
+
 export default function OrderDetails({ order, onClose }) {
+  useEffect(() => {
+    if (!order) return;
+
+    function onKeyDown(event) {
+      if (event.key === 'Escape') onClose();
+    }
+
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => document.removeEventListener(
+      'keydown',
+      onKeyDown
+    );
+  }, [order, onClose]);
+
   if (!order) return null;
 
-  const total = order.items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
+  const stage = getOrderStage(order);
+  const totals = orderTotals(order);
+
+  const prepared = order.items.filter(item =>
+    ['ready', 'served'].includes(item.status)
+  ).length;
+
+  const progress = order.items.length
+    ? (prepared / order.items.length) * 100
+    : 0;
 
   return (
     <div
@@ -13,17 +53,23 @@ export default function OrderDetails({ order, onClose }) {
       onClick={onClose}
     >
       <div
-        className="card admin-order-dialog"
+        className="card admin-order-dialog a-order-detail"
         role="dialog"
         aria-modal="true"
         aria-labelledby="order-detail-title"
         onClick={event => event.stopPropagation()}
       >
-        <div className="admin-order-dialog-header">
+        <header className="a-order-detail-header">
           <div>
             <span className="eyebrow">ORDER DETAILS</span>
-            <h2 id="order-detail-title">{order.id}</h2>
-            <p className="muted">{order.table} · {order.time}</p>
+            <h2 id="order-detail-title">
+              Order #{order.id}
+            </h2>
+            <p>
+              {formatDate(order.receivedAt)}
+              {' · '}
+              {formatClock(order.receivedAt)}
+            </p>
           </div>
 
           <button
@@ -34,59 +80,121 @@ export default function OrderDetails({ order, onClose }) {
           >
             ×
           </button>
+        </header>
+
+        <div className="a-order-detail-meta">
+          <div>
+            <small>ORDER TYPE</small>
+            <strong>
+              {order.type === 'takeaway'
+                ? 'Takeaway'
+                : 'Dine-in'}
+            </strong>
+          </div>
+
+          <div>
+            <small>TABLE</small>
+            <strong>
+              {order.type === 'takeaway'
+                ? '—'
+                : `Table ${order.table}`}
+            </strong>
+          </div>
+
+          <div>
+            <small>STATUS</small>
+            <span className={`a-order-status a-order-${stage}`}>
+              {labels[stage]}
+            </span>
+          </div>
         </div>
 
-        <div className="admin-order-detail-info">
+        <section className="a-order-detail-progress">
           <div>
-            <span className="muted">Order Status</span>
-            <strong>{order.status}</strong>
+            <strong>Preparation Progress</strong>
+            <span>{prepared} of {order.items.length} dish lines</span>
           </div>
-          <div>
-            <span className="muted">Payment</span>
-            <strong>{order.paymentStatus}</strong>
+
+          <div
+            className="a-orders-progress-track"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={order.items.length}
+            aria-valuenow={prepared}
+            aria-label="Preparation progress"
+          >
+            <span style={{ width: `${progress}%` }} />
           </div>
-        </div>
+        </section>
 
-        <h3>Ordered Items</h3>
+        <h3 className="a-order-detail-section">
+          Ordered Dishes
+        </h3>
 
-        <div className="admin-order-item-list">
-          {order.items.map((item, index) => (
-            <div className="admin-order-item" key={index}>
-              <div>
-                <strong>{item.name}</strong>
-                <p className="muted">
-                  {item.quantity} × ${item.price.toFixed(2)}
-                </p>
+        <div className="a-order-detail-items">
+          {order.items.map(item => (
+            <div className="a-order-detail-item" key={item.lineId}>
+              <div className="a-order-detail-thumbnail">
+                {item.image ? (
+                  <img src={item.image} alt="" />
+                ) : (
+                  <Icon name="utensils" size={22} />
+                )}
               </div>
-              <strong>
-                ${(item.price * item.quantity).toFixed(2)}
-              </strong>
+
+              <div className="a-order-detail-item-info">
+                <strong>{item.qty}× {item.name}</strong>
+
+                {item.note && <small>Note: {item.note}</small>}
+
+                <span
+                  className={`a-dish-status a-dish-${item.status}`}
+                >
+                  {item.status}
+                </span>
+              </div>
+
+              <div className="a-order-detail-item-price">
+                <strong>{money(item.price * item.qty)}</strong>
+                <small>{money(item.price)} each</small>
+              </div>
             </div>
           ))}
         </div>
 
-        <div className="admin-order-grand-total">
-          <strong>Sample Total</strong>
-          <strong>${total.toFixed(2)}</strong>
+        <div className="a-order-detail-totals">
+          <div>
+            <span>Subtotal ({dishCount(order)} items)</span>
+            <strong>{money(totals.subtotal)}</strong>
+          </div>
+
+          <div>
+            <span>Estimated Tax (8%)</span>
+            <strong>{money(totals.tax)}</strong>
+          </div>
+
+          <div className="a-order-detail-grand">
+            <span>Total</span>
+            <strong>{money(totals.total)}</strong>
+          </div>
         </div>
 
-        <div className="admin-order-note">
-          <strong>Kitchen Instructions</strong>
-          <p className="muted">
-            {order.instructions || 'No special instructions.'}
-          </p>
-        </div>
+        <div className="a-order-detail-footer">
+          <span>
+            <Icon name="lock" size={15} />
+            Monitoring only. Kitchen staff manage preparation.
+          </span>
 
-        <div className="admin-form-actions">
           <button
             type="button"
             className="btn btn-primary"
             onClick={onClose}
           >
-            Close
+            Close Details
           </button>
         </div>
       </div>
     </div>
   );
 }
+
