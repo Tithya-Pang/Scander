@@ -6,6 +6,9 @@ import Checkout from '../pages/customer/Checkout';
 import CustomerLayout from '../components/layout/CustomerLayout';
 import KitchenDashboard from '../pages/kitchen/KitchenDashboard';
 import OrderHistory from '../pages/kitchen/OrderHistory';
+import KitchenOrderDetails from '../pages/kitchen/KitchenOrderDetails';
+import KitchenSettings from '../pages/kitchen/KitchenSettings';
+import KitchenLayout from '../components/layout/KitchenLayout';
 import AdminDashboard from '../pages/admin/AdminDashboard';
 import MenuManagement from '../pages/admin/MenuManagement';
 import CategoryManagement from '../pages/admin/CategoryManagement';
@@ -26,7 +29,6 @@ function CustomerRedirect({ to }) {
   return <Navigate to={{ pathname: to, search, hash }} replace />;
 }
 
-const kitchenLinks = [['/kitchen','Dashboard'],['/kitchen/history','Order History'],['/kitchen/settings','Settings']];
 const adminLinks = [
   ['/admin', 'Dashboard'],
   ['/admin/menu', 'Menu'],
@@ -47,10 +49,11 @@ export default function AppRoutes() {
       <Route path="/customer/checkout" element={<Checkout/>}/>
       <Route path="/customer/orders" element={<Placeholder title="Order Tracking"/>}/>
     </Route>
-    <Route element={<PageLayout title="Kitchen" links={kitchenLinks}/> }>
+    <Route element={<KitchenLayout/>}>
       <Route path="/kitchen" element={<KitchenDashboard/>}/>
       <Route path="/kitchen/history" element={<OrderHistory/>}/>
-      <Route path="/kitchen/settings" element={<Placeholder title="Kitchen Settings"/>}/>
+      <Route path="/kitchen/history/:orderId" element={<KitchenOrderDetails/>}/>
+      <Route path="/kitchen/settings" element={<KitchenSettings/>}/>
     </Route>
     <Route element={<AdminMenuProvider>
       <PageLayout title="Admin" links={adminLinks} />
