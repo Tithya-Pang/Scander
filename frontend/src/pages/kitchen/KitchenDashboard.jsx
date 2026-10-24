@@ -1,13 +1,41 @@
-import { useState } from 'react';
 import KanbanColumn from '../../components/kitchen/KanbanColumn';
-const initialOrders = [
-  {id:'#1024',table:'04',time:'2 min ago',status:'Received',items:['1 × Iced Latte','2 × Fried Rice']},
-  {id:'#1025',table:'02',time:'5 min ago',status:'Preparing',items:['1 × Chicken Sandwich','1 × Lemon Tea']},
-  {id:'#1026',table:'07',time:'7 min ago',status:'Ready',items:['2 × Cappuccino']},
+import { KitchenStat } from '../../components/kitchen/KitchenTags';
+import { useKitchen } from '../../context/KitchenContext';
+import { getOrderStage, minutesBetween, prepMinutes, RUSH_THRESHOLD_MINUTES } from '../../data/kitchenOrders';
+
+const columns = [
+  { stage: 'received', title: 'Received', icon: 'inbox', hint: 'New orders · acknowledge and send to kitchen', empty: 'No new orders. Incoming tickets appear here.' },
+  { stage: 'preparing', title: 'Preparing', icon: 'flame', hint: 'Update each dish as it comes off the line', empty: 'Nothing on the line right now.' },
+  { stage: 'ready', title: 'Ready to Serve', icon: 'cloche', hint: 'All remaining dishes ready for pickup by waitstaff', empty: 'No orders waiting for pickup.' },
 ];
-const stages = ['Received','Preparing','Ready','Served'];
+
 export default function KitchenDashboard() {
- const [orders,setOrders]=useState(initialOrders);
- const move = id=>setOrders(prev=>prev.map(o=>o.id===id?{...o,status:stages[stages.indexOf(o.status)+1]}:o));
- return <section><span className="eyebrow">LIVE QUEUE PREVIEW</span><h1>Kitchen Queue</h1><p className="muted">Manage incoming orders. Changes are local demo state only.</p><div className="kanban">{stages.slice(0,3).map(stage=><KanbanColumn key={stage} title={stage} orders={orders.filter(o=>o.status===stage)} onNext={move}/>)}</div><p className="muted note">Served orders disappear from this demo queue. Real history requires a backend.</p></section>;
+  const { orders, now } = useKitchen();
+  const byStage = { received: [], preparing: [], ready: [] };
+  const completedToday = [];
+  const today = new Date(now).toDateString();
+  orders.forEach(order => {
+    const stage = getOrderStage(order);
+    if (byStage[stage]) byStage[stage].push(order);
+    else if (new Date(order.completedAt).toDateString() === today) completedToday.push(order);
+  });
+  Object.values(byStage).forEach(list => list.sort((a, b) => a.receivedAt - b.receivedAt));
+  const active = [...byStage.received, ...byStage.preparing, ...byStage.ready];
+  const waiting = active.filter(order => minutesBetween(order.receivedAt, now) >= RUSH_THRESHOLD_MINUTES).length;
+  const avgPrep = completedToday.length ? completedToday.reduce((sum, order) => sum + prepMinutes(order), 0) / completedToday.length : null;
+
+  return <section className="k-page">
+    <header className="k-page-head">
+      <div>
+        <div className="k-title-row"><h1>Kitchen Queue</h1><span className="k-live" title="Orders are simulated in the browser until the backend is connected">Live · demo data</span></div>
+        <p>Track and update dishes in real time. Keep the good food flowing.</p>
+      </div>
+      <div className="k-stats">
+        <KitchenStat icon="clock" value={avgPrep === null ? '—' : `${avgPrep.toFixed(1)}m`} label="Avg. prep time today"/>
+        <KitchenStat icon="cloche" value={active.length} label="Active orders"/>
+        <KitchenStat icon="alert" value={waiting} label={`Waiting ≥ ${RUSH_THRESHOLD_MINUTES} min`} tone={waiting ? 'warn' : undefined}/>
+      </div>
+    </header>
+    <div className="k-board">{columns.map(column => <KanbanColumn key={column.stage} {...column} orders={byStage[column.stage]}/>)}</div>
+  </section>;
 }
