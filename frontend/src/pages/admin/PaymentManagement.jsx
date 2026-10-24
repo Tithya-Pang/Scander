@@ -1,71 +1,28 @@
 
 import { useState } from 'react';
-import StatCard from '../../components/admin/StatCard';
+import Icon from '../../components/common/Icon';
 import PaymentDetails from '../../components/admin/PaymentDetails';
+import {
+  demoPayments,
+  getDemoPaymentTotal
+} from '../../data/demoPayments';
+// Demo records until payment APIs are connected.
 
-const samplePayments = [
-  {
-    orderId: '#1024',
-    table: 'Table 04',
-    date: 'Oct 24, 2026',
-    method: null,
-    status: 'Unpaid',
-    items: [
-      { name: 'Iced Latte', quantity: 1, price: 3.50 },
-      { name: 'Fried Rice', quantity: 2, price: 4.50 }
-    ]
-  },
-  {
-    orderId: '#1025',
-    table: 'Table 02',
-    date: 'Oct 24, 2026',
-    method: null,
-    status: 'Unpaid',
-    items: [
-      { name: 'Chicken Sandwich', quantity: 1, price: 5.25 },
-      { name: 'Cappuccino', quantity: 1, price: 3.75 }
-    ]
-  },
-  {
-    orderId: '#1026',
-    table: 'Table 07',
-    date: 'Oct 24, 2026',
-    method: null,
-    status: 'Unpaid',
-    items: [
-      { name: 'Cappuccino', quantity: 2, price: 3.75 }
-    ]
-  },
-  {
-    orderId: '#1027',
-    table: 'Table 01',
-    date: 'Oct 24, 2026',
-    method: 'KHQR',
-    status: 'Paid',
-    items: [
-      { name: 'Avocado Toast', quantity: 2, price: 4.75 },
-      { name: 'Iced Latte', quantity: 2, price: 3.50 }
-    ]
-  },
-  {
-    orderId: '#1028',
-    table: 'Table 05',
-    date: 'Oct 24, 2026',
-    method: 'Cash',
-    status: 'Paid',
-    items: [
-      { name: 'Cappuccino', quantity: 1, price: 3.75 },
-      { name: 'Chocolate Cake', quantity: 1, price: 4.25 }
-    ]
-  }
-];
+const samplePayments = demoPayments;
+const getTotal = getDemoPaymentTotal;
 
 const money = value => `$${value.toFixed(2)}`;
 
-function getTotal(payment) {
-  return payment.items.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
+function PaymentStat({ label, value, hint, icon, tone }) {
+  return (
+    <article className={`a-payment-stat a-payment-stat-${tone}`}>
+      <div className="a-payment-stat-top">
+        <span>{label}</span>
+        <Icon name={icon} size={22} />
+      </div>
+      <strong>{value}</strong>
+      <small>{hint}</small>
+    </article>
   );
 }
 
@@ -88,7 +45,7 @@ export default function PaymentManagement() {
     0
   );
 
-  const outstandingAmount = unpaidPayments.reduce(
+  const outstanding = unpaidPayments.reduce(
     (sum, payment) => sum + getTotal(payment),
     0
   );
@@ -98,7 +55,10 @@ export default function PaymentManagement() {
 
     const matchesSearch =
       payment.orderId.toLowerCase().includes(query) ||
-      payment.table.toLowerCase().includes(query);
+      payment.table.toLowerCase().includes(query) ||
+      payment.items.some(item =>
+        item.name.toLowerCase().includes(query)
+      );
 
     const matchesStatus =
       statusFilter === 'All' ||
@@ -106,71 +66,109 @@ export default function PaymentManagement() {
 
     const matchesMethod =
       methodFilter === 'All' ||
-      payment.method === methodFilter;
+      (methodFilter === 'None'
+        ? !payment.method
+        : payment.method === methodFilter);
 
     return matchesSearch && matchesStatus && matchesMethod;
   });
 
+  function resetFilters() {
+    setSearch('');
+    setStatusFilter('All');
+    setMethodFilter('All');
+  }
+
   return (
-    <section className="admin-payments">
-      <div className="admin-heading">
+    <section className="a-payments-page">
+
+      {/* Page heading */}
+      <header className="a-payments-heading">
         <div>
           <span className="eyebrow">FINANCIAL OVERVIEW</span>
           <h1>Payment Management</h1>
-          <p className="muted">
-            Monitor payment records and view receipts.
-          </p>
-          <p className="muted">
-            Demo mode — no actual payments are processed.
+          <p>
+            Monitor payment records, transaction status, and receipts.
           </p>
         </div>
 
-        <span className="admin-demo-label">Demo Data</span>
-      </div>
+        <span className="a-payments-demo">
+          <Icon name="file" size={16} />
+          Demo transactions
+        </span>
+      </header>
 
-      <div className="stats-grid">
-        <StatCard
+      {/* Summary cards */}
+      <div className="a-payment-stats">
+        <PaymentStat
           label="Total Collected"
           value={money(totalCollected)}
-          hint="Paid sample orders"
+          hint="Sample paid transactions"
+          icon="checkCircle"
+          tone="green"
         />
-        <StatCard
+
+        <PaymentStat
           label="Paid Orders"
           value={paidPayments.length}
-          hint="Payment completed"
+          hint="Marked paid in demo data"
+          icon="check"
+          tone="blue"
         />
-        <StatCard
+
+        <PaymentStat
           label="Unpaid Orders"
           value={unpaidPayments.length}
-          hint="Awaiting payment"
+          hint="Pending demonstration payments"
+          icon="clock"
+          tone="amber"
         />
-        <StatCard
+
+        <PaymentStat
           label="Outstanding"
-          value={money(outstandingAmount)}
-          hint="Unpaid sample amounts"
+          value={money(outstanding)}
+          hint="Sample unpaid order totals"
+          icon="alert"
+          tone="purple"
         />
       </div>
 
-      <div className="card admin-payment-list">
-        <div className="admin-section-heading">
-          <h2>Payment Records</h2>
-          <span className="muted">
-            {filteredPayments.length} records
+      {/* Payment records */}
+      <section className="card a-payments-panel">
+        <div className="a-payments-panel-head">
+          <div>
+            <h2>Payment Records</h2>
+            <p>
+              {filteredPayments.length} matching transactions
+            </p>
+          </div>
+
+          <span className="a-payment-view-only">
+            <Icon name="lock" size={15} />
+            Monitoring only
           </span>
         </div>
 
-        <div className="admin-menu-toolbar">
-          <input
-            type="search"
-            placeholder="Search order or table..."
-            value={search}
-            onChange={event => setSearch(event.target.value)}
-          />
+        {/* Search and filters */}
+        <div className="a-payments-filters">
+          <label className="a-payments-search">
+            <Icon name="search" size={19} />
+
+            <input
+              type="search"
+              placeholder="Search order, table, or item..."
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              aria-label="Search payments"
+            />
+          </label>
 
           <select
             value={statusFilter}
-            aria-label="Filter payment status"
-            onChange={event => setStatusFilter(event.target.value)}
+            onChange={event =>
+              setStatusFilter(event.target.value)
+            }
+            aria-label="Filter by payment status"
           >
             <option value="All">All Statuses</option>
             <option value="Paid">Paid</option>
@@ -179,55 +177,111 @@ export default function PaymentManagement() {
 
           <select
             value={methodFilter}
-            aria-label="Filter payment method"
-            onChange={event => setMethodFilter(event.target.value)}
+            onChange={event =>
+              setMethodFilter(event.target.value)
+            }
+            aria-label="Filter by payment method"
           >
             <option value="All">All Methods</option>
             <option value="KHQR">KHQR</option>
             <option value="Cash">Cash</option>
+            <option value="None">Not Paid</option>
           </select>
+
+          <button
+            type="button"
+            className="a-payments-reset"
+            onClick={resetFilters}
+            title="Reset filters"
+            aria-label="Reset filters"
+          >
+            <Icon name="refresh" size={19} />
+          </button>
         </div>
 
         <div className="table-scroll">
-          <table>
+          <table className="a-payments-table">
             <thead>
               <tr>
-                <th>Order ID</th>
-                <th>Table</th>
-                <th>Date</th>
-                <th>Amount</th>
-                <th>Method</th>
-                <th>Status</th>
-                <th>Actions</th>
+                <th>ORDER</th>
+                <th>TABLE</th>
+                <th>DATE</th>
+                <th>AMOUNT</th>
+                <th>METHOD</th>
+                <th>STATUS</th>
+                <th>ACTION</th>
               </tr>
             </thead>
 
             <tbody>
               {filteredPayments.map(payment => (
                 <tr key={payment.orderId}>
-                  <td><strong>{payment.orderId}</strong></td>
-                  <td>{payment.table}</td>
-                  <td>{payment.date}</td>
                   <td>
-                    <strong>{money(getTotal(payment))}</strong>
+                    <div className="a-payment-order-cell">
+                      <strong>{payment.orderId}</strong>
+                      <small>
+                        {payment.items.reduce(
+                          (sum, item) => sum + item.quantity,
+                          0
+                        )} items
+                      </small>
+                    </div>
                   </td>
-                  <td>{payment.method || '—'}</td>
+
+                  <td>{payment.table}</td>
+
+                  <td className="a-payment-date">
+                    {payment.date}
+                  </td>
+
+                  <td>
+                    <strong className="a-payment-amount">
+                      {money(getTotal(payment))}
+                    </strong>
+                  </td>
+
+                  <td>
+                    {payment.method ? (
+                      <span
+                        className={`a-payment-method a-method-${payment.method.toLowerCase()}`}
+                      >
+                        <Icon
+                          name={payment.method === 'Cash'
+                            ? 'bag'
+                            : 'grid'}
+                          size={15}
+                        />
+                        {payment.method}
+                      </span>
+                    ) : (
+                      <span className="a-method-none">—</span>
+                    )}
+                  </td>
+
                   <td>
                     <span
-                      className={`admin-payment-badge ${payment.status.toLowerCase()}`}
+                      className={`a-payment-status a-payment-${payment.status.toLowerCase()}`}
                     >
+                      <Icon
+                        name={payment.status === 'Paid'
+                          ? 'checkCircle'
+                          : 'clock'}
+                        size={15}
+                      />
                       {payment.status}
                     </span>
                   </td>
+
                   <td>
                     <button
                       type="button"
-                      className="btn btn-outline btn-small"
+                      className="a-payment-details-button"
                       onClick={() => setSelectedPayment(payment)}
                     >
                       {payment.status === 'Paid'
                         ? 'View Receipt'
                         : 'View Details'}
+                      <Icon name="chevronRight" size={15} />
                     </button>
                   </td>
                 </tr>
@@ -235,15 +289,30 @@ export default function PaymentManagement() {
 
               {filteredPayments.length === 0 && (
                 <tr>
-                  <td colSpan="7" className="admin-empty">
-                    No matching payments found.
+                  <td colSpan={7} className="admin-empty">
+                    <p>No payments match your filters.</p>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-small"
+                      onClick={resetFilters}
+                    >
+                      Clear Filters
+                    </button>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
+
+        <footer className="a-payments-table-footer">
+          <span>
+            Showing {filteredPayments.length} of{' '}
+            {samplePayments.length} records
+          </span>
+          <span>Sample data · Oct 24, 2026</span>
+        </footer>
+      </section>
 
       {selectedPayment && (
         <PaymentDetails

@@ -3,6 +3,7 @@ import {
   createContext,
   useContext,
   useEffect,
+  useMemo,
   useState
 } from 'react';
 
@@ -12,109 +13,179 @@ import {
 } from '../data/menu';
 
 const AdminMenuContext = createContext(null);
+
 const STORAGE_KEY = 'scander-admin-menu-demo-v1';
 
-function createInitialData() {
-  return {
-    categories: sampleCategories
-      .filter(name => name !== 'All')
-      .map(name => ({
-        id: crypto.randomUUID(),
-        name
-      })),
+// Convert the sample categories into editable records.
+const initialCategories = sampleCategories
+  .filter(category => category !== 'All')
+  .map((category, index) => ({
+    id: index + 1,
+    name: category
+  }));
 
-    items: sampleMenuItems.map(item => ({
-      ...item,
-      availability: item.availability ?? true
-    }))
+const initialItems = sampleMenuItems.map(item => ({
+  ...item,
+  availability: item.availability !== false,
+  image: item.image || ''
+}));
+
+function initialData() {
+  return {
+    categories: initialCategories,
+    items: initialItems
   };
 }
 
 function loadData() {
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY);
 
-    if (saved) {
-      const parsed = JSON.parse(saved);
-
-      if (
-        Array.isArray(parsed.categories) &&
-        Array.isArray(parsed.items)
-      ) {
-        return parsed;
-      }
+    if (!raw) {
+      return initialData();
     }
+
+    const parsed = JSON.parse(raw);
+
+    if (
+      !parsed ||
+      !Array.isArray(parsed.items) ||
+      !Array.isArray(parsed.categories)
+    ) {
+      return initialData();
+    }
+
+    return {
+      items: parsed.items.map(item => ({
+        ...item,
+        availability: item.availability !== false,
+        image: item.image || ''
+      })),
+      categories: parsed.categories
+        .map((category, index) =>
+          typeof category === 'string'
+            ? { id: index + 1, name: category }
+            : category
+        )
+        .filter(category => category?.name)
+    };
   } catch (error) {
-    console.warn('Unable to load demo menu data:', error);
+    console.warn('Could not load saved menu:', error);
+    return initialData();
+  }
+}
+
+function createId() {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
   }
 
-  return createInitialData();
+  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
 export function AdminMenuProvider({ children }) {
   const [data, setData] = useState(loadData);
 
+  const [storageError, setStorageError] = useState('');
+
+  // Save changes so they survive a browser refresh.
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      setStorageError('');
     } catch (error) {
-      console.warn('Unable to save demo menu data:', error);
+      console.warn('Could not save menu data:', error);
+      setStorageError(
+        'Menu changes could not be saved in browser storage.'
+      );
     }
   }, [data]);
 
+  // ==========================================
+  // MENU ITEM FUNCTIONS
+  // ==========================================
+
   function saveItem(formData, editingId = null) {
+    const cleaned = {
+      ...formData,
+      name: String(formData.name || '').trim(),
+      description: String(formData.description || '').trim(),
+      price: Number(formData.price),
+      image: formData.image || ''
+    };
+
+    if (
+      !cleaned.name ||
+      !Number.isFinite(cleaned.price) ||
+      cleaned.price <= 0
+    ) {
+      return false;
+    }
+
     setData(previous => {
       if (editingId !== null) {
         return {
           ...previous,
           items: previous.items.map(item =>
             item.id === editingId
-              ? { ...item, ...formData }
+              ? {
+                  ...item,
+                  ...cleaned,
+                  // Editing should preserve current availability.
+                  availability: item.availability
+                }
               : item
           )
         };
       }
 
+      const newItem = {
+        ...cleaned,
+        id: createId(),
+        availability: true
+      };
+
       return {
         ...previous,
-        items: [
-          ...previous.items,
-          {
-            ...formData,
-            id: crypto.randomUUID(),
-            availability: true,
-            image: ''
-          }
-        ]
+        items: [...previous.items, newItem]
       };
     });
+
+    return true;
   }
 
-  function deleteItem(id) {
+  function deleteItem(itemId) {
     setData(previous => ({
       ...previous,
-      items: previous.items.filter(item => item.id !== id)
+      items: previous.items.filter(item => item.id !== itemId)
     }));
   }
 
-  function toggleItemAvailability(id) {
+  function toggleItemAvailability(itemId) {
     setData(previous => ({
       ...previous,
       items: previous.items.map(item =>
-        item.id === id
-          ? { ...item, availability: !item.availability }
+        item.id === itemId
+          ? {
+              ...item,
+              availability: !item.availability
+            }
           : item
       )
     }));
   }
 
-  function saveCategory(name, editingId = null) {
-    const cleanName = name.trim();
+  // ==========================================
+  // CATEGORY FUNCTIONS
+  // ==========================================
 
-    if (!cleanName) return false;
+  function saveCategory(name, editingId = null) {
+    const cleanedName = String(name || '').trim();
+
+    if (!cleanedName) return false;
 
     const duplicate = data.categories.some(category =>
-      category.name.toLowerCase() === cleanName.toLowerCase() &&
+      category.name.toLowerCase() === cleanedName.toLowerCase() &&
       category.id !== editingId
     );
 
@@ -129,14 +200,15 @@ export function AdminMenuProvider({ children }) {
         if (!oldCategory) return previous;
 
         return {
+          ...previous,
           categories: previous.categories.map(category =>
             category.id === editingId
-              ? { ...category, name: cleanName }
+              ? { ...category, name: cleanedName }
               : category
           ),
           items: previous.items.map(item =>
             item.category === oldCategory.name
-              ? { ...item, category: cleanName }
+              ? { ...item, category: cleanedName }
               : item
           )
         };
@@ -147,8 +219,8 @@ export function AdminMenuProvider({ children }) {
         categories: [
           ...previous.categories,
           {
-            id: crypto.randomUUID(),
-            name: cleanName
+            id: createId(),
+            name: cleanedName
           }
         ]
       };
@@ -157,9 +229,9 @@ export function AdminMenuProvider({ children }) {
     return true;
   }
 
-  function deleteCategory(id) {
+  function deleteCategory(categoryId) {
     const category = data.categories.find(
-      category => category.id === id
+      entry => entry.id === categoryId
     );
 
     if (!category) return false;
@@ -173,23 +245,33 @@ export function AdminMenuProvider({ children }) {
     setData(previous => ({
       ...previous,
       categories: previous.categories.filter(
-        category => category.id !== id
+        entry => entry.id !== categoryId
       )
     }));
 
     return true;
   }
 
+  // ==========================================
+  // SHARED CONTEXT VALUE
+  // ==========================================
+
+  const value = useMemo(() => ({
+    items: data.items,
+    categories: data.categories,
+    storageError,
+
+    saveItem,
+    deleteItem,
+    toggleItemAvailability,
+
+    saveCategory,
+    deleteCategory
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [data, storageError]);
+
   return (
-    <AdminMenuContext.Provider value={{
-      categories: data.categories,
-      items: data.items,
-      saveItem,
-      deleteItem,
-      toggleItemAvailability,
-      saveCategory,
-      deleteCategory
-    }}>
+    <AdminMenuContext.Provider value={value}>
       {children}
     </AdminMenuContext.Provider>
   );

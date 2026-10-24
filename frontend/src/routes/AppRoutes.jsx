@@ -15,7 +15,9 @@ import CategoryManagement from '../pages/admin/CategoryManagement';
 import TableManagement from '../pages/admin/TableManagement';
 import OrderManagement from '../pages/admin/OrderManagement';
 import PaymentManagement from '../pages/admin/PaymentManagement';
+import AdminLayout from '../components/layout/AdminLayout';
 import Reports from '../pages/admin/Reports';
+import AdminSettings from '../pages/admin/AdminSettings';
 import { AdminMenuProvider } from '../context/AdminMenuContext';
 import Placeholder from '../components/common/Placeholder';
 import Login from '../pages/auth/Login';
@@ -56,7 +58,7 @@ export default function AppRoutes() {
       <Route path="/kitchen/settings" element={<KitchenSettings/>}/>
     </Route>
     <Route element={<AdminMenuProvider>
-      <PageLayout title="Admin" links={adminLinks} />
+      <AdminLayout />
     </AdminMenuProvider>}>
       <Route path="/admin" element={<AdminDashboard/>}/>
       <Route path="/admin/menu" element={<MenuManagement />} />
@@ -65,7 +67,7 @@ export default function AppRoutes() {
       <Route path="/admin/tables" element={<TableManagement />}/>
       <Route path="/admin/payments" element={<PaymentManagement />}/>
       <Route path="/admin/reports" element={<Reports />}/>
-      <Route path="/admin/settings" element={<Placeholder title="Admin Settings"/>}/>
+      <Route path="/admin/settings" element={<AdminSettings/>}/>
     </Route>
     <Route path="/login" element={<Login/>}/>
     <Route path="/menu" element={<CustomerRedirect to="/customer/menu"/>}/>

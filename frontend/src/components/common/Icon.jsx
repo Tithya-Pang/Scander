@@ -1,4 +1,5 @@
 const paths = {
+  plus: <path d="M12 5v14M5 12h14" />,
   coffee: <><path d="M4 8h13v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4Z"/><path d="M17 9h2a3 3 0 0 1 0 6h-2M7 3v2m4-2v2m4-2v2"/></>,
   menu: <><path d="m4 3 17 18M3 4l4 4m-1-6 4 4M3 7l4 4 4-4M16 3c-4 4-4 6-2 8l7-7M3 21l7-7"/></>,
   bag: <><rect x="4" y="5" width="16" height="17" rx="3"/><path d="M8 9a4 4 0 0 0 8 0M8 5V3h8v2"/></>,

@@ -1,89 +1,137 @@
 
 import { useState } from 'react';
+import Icon from '../../components/common/Icon';
 import MenuForm from '../../components/admin/MenuForm';
 import { useAdminMenu } from '../../context/AdminMenuContext';
 
+const money = amount => `$${Number(amount).toFixed(2)}`;
+
+function MenuPhoto({ item }) {
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <div className="a-menu-photo">
+      {item.image && !failed ? (
+        <img
+          src={item.image}
+          alt=""
+          loading="lazy"
+          onError={() => setFailed(true)}
+          style={{
+            objectPosition: item.imagePosition || 'center'
+          }}
+        />
+      ) : (
+        <Icon name="utensils" size={23} />
+      )}
+    </div>
+  );
+}
+
 export default function MenuManagement() {
   const {
-  items,
-  categories: sharedCategories,
-  saveItem,
-  deleteItem,
-  toggleItemAvailability
-} = useAdminMenu();
+    items,
+    categories: sharedCategories,
+    saveItem,
+    deleteItem,
+    toggleItemAvailability
+  } = useAdminMenu();
+
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
+  const [availability, setAvailability] = useState('all');
   const [editingItem, setEditingItem] = useState(null);
   const [showForm, setShowForm] = useState(false);
 
-  const categories = sharedCategories.map(category => category.name);
+  const categories = sharedCategories.map(entry => entry.name);
+  const availableCount = items.filter(item => item.availability).length;
+  const soldOutCount = items.length - availableCount;
 
   const filteredItems = items.filter(item => {
-    const matchesSearch = item.name
-      .toLowerCase()
-      .includes(search.trim().toLowerCase());
+    const query = search.trim().toLowerCase();
+
+    const matchesSearch =
+      item.name.toLowerCase().includes(query) ||
+      (item.description || '').toLowerCase().includes(query);
 
     const matchesCategory =
       category === 'All' || item.category === category;
 
-    return matchesSearch && matchesCategory;
+    const matchesAvailability =
+      availability === 'all' ||
+      (availability === 'available' && item.availability) ||
+      (availability === 'soldout' && !item.availability);
+
+    return matchesSearch && matchesCategory && matchesAvailability;
   });
 
-    function handleSave(formData) {
-    saveItem(formData, editingItem?.id ?? null);
-
-    setShowForm(false);
+  function closeForm() {
     setEditingItem(null);
-    }
-
-  function handleEdit(item) {
-    setEditingItem(item);
-    setShowForm(true);
+    setShowForm(false);
   }
 
-  function handleDelete(id) {
-    const confirmed = window.confirm(
-        'Are you sure you want to delete this menu item?'
-    );
+  function handleSave(formData) {
+    saveItem(formData, editingItem?.id ?? null);
+    closeForm();
+  }
 
-    if (!confirmed) return;
-
-    deleteItem(id);
+  function handleDelete(item) {
+    if (!window.confirm(`Delete "${item.name}" from the menu?`)) {
+      return;
     }
 
-  function toggleAvailability(id) {
-  toggleItemAvailability(id);
-}
+    deleteItem(item.id);
+  }
 
-  function closeForm() {
-    setShowForm(false);
-    setEditingItem(null);
+  function resetFilters() {
+    setSearch('');
+    setCategory('All');
+    setAvailability('all');
   }
 
   return (
-    <section className="admin-menu">
-      <div className="admin-heading">
+    <section className="a-catalog-page">
+      <header className="a-catalog-heading">
         <div>
-          <span className="eyebrow">MENU MANAGEMENT</span>
-          <h1>Menu Items</h1>
-          <p className="muted">
-            Manage your restaurant's food and drinks.
-          </p>
-          <p className="muted">
-            Demo mode — changes reset when the page reloads.
+          <span className="eyebrow">MENU CATALOG</span>
+          <h1>Menu Management</h1>
+          <p>
+            Keep your food and drink catalog organized and up to date.
           </p>
         </div>
 
         <button
-            className="btn btn-primary"
-            disabled={categories.length === 0}
-            onClick={() => {
-                setEditingItem(null);
-                setShowForm(true);
-            }}
-            >
-            + Add Menu Item
+          type="button"
+          className="btn btn-primary a-catalog-add"
+          disabled={categories.length === 0}
+          onClick={() => {
+            setEditingItem(null);
+            setShowForm(true);
+          }}
+        >
+          <Icon name="plus" size={18} />
+          Add Menu Item
         </button>
+      </header>
+
+      <div className="a-catalog-stats">
+        <div className="a-catalog-stat a-catalog-stat-slate">
+          <span>Total Menu Items</span>
+          <strong>{items.length}</strong>
+          <small>Items in your catalog</small>
+        </div>
+
+        <div className="a-catalog-stat a-catalog-stat-green">
+          <span>Available</span>
+          <strong>{availableCount}</strong>
+          <small>Ready for customers</small>
+        </div>
+
+        <div className="a-catalog-stat a-catalog-stat-amber">
+          <span>Sold Out</span>
+          <strong>{soldOutCount}</strong>
+          <small>Currently unavailable</small>
+        </div>
       </div>
 
       {showForm && (
@@ -96,70 +144,141 @@ export default function MenuManagement() {
         />
       )}
 
-      <div className="card">
-        <div className="admin-menu-toolbar">
-          <input
-            type="search"
-            placeholder="Search menu items..."
-            value={search}
-            onChange={event => setSearch(event.target.value)}
-          />
+      <section className="card a-catalog-panel">
+        <div className="a-catalog-panel-heading">
+          <div>
+            <h2>All Menu Items</h2>
+            <p>{filteredItems.length} matching items</p>
+          </div>
+          <span className="a-catalog-demo">
+            <Icon name="file" size={15} />
+            Browser demo data
+          </span>
+        </div>
+
+        <div className="a-catalog-filters">
+          <label className="a-catalog-search">
+            <Icon name="search" size={19} />
+            <input
+              type="search"
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              placeholder="Search food or drinks..."
+              aria-label="Search menu items"
+            />
+          </label>
 
           <select
             value={category}
             onChange={event => setCategory(event.target.value)}
+            aria-label="Filter by category"
           >
             <option value="All">All Categories</option>
             {categories.map(name => (
-              <option key={name} value={name}>
-                {name}
-              </option>
+              <option key={name} value={name}>{name}</option>
             ))}
           </select>
+
+          <select
+            value={availability}
+            onChange={event => setAvailability(event.target.value)}
+            aria-label="Filter by availability"
+          >
+            <option value="all">All Availability</option>
+            <option value="available">Available</option>
+            <option value="soldout">Sold Out</option>
+          </select>
+
+          <button
+            type="button"
+            className="a-catalog-reset"
+            title="Reset filters"
+            aria-label="Reset filters"
+            onClick={resetFilters}
+          >
+            <Icon name="refresh" size={19} />
+          </button>
         </div>
 
         <div className="table-scroll">
-          <table>
+          <table className="a-catalog-table">
             <thead>
               <tr>
-                <th>Item</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Availability</th>
-                <th>Actions</th>
+                <th>MENU ITEM</th>
+                <th>CATEGORY</th>
+                <th>PRICE</th>
+                <th>AVAILABILITY</th>
+                <th>ACTIONS</th>
               </tr>
             </thead>
 
             <tbody>
               {filteredItems.map(item => (
                 <tr key={item.id}>
-                  <td>{item.name}</td>
-                  <td>{item.category}</td>
-                  <td>${item.price.toFixed(2)}</td>
+                  <td>
+                    <div className="a-menu-product">
+                      <MenuPhoto
+                        key={`${item.id}-${item.image || ''}`}
+                        item={item}
+                      />
+
+                      <div>
+                        <strong>{item.name}</strong>
+                        <small>
+                          {item.description || 'No description added'}
+                        </small>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td>
+                    <span className="a-catalog-category-badge">
+                      {item.category}
+                    </span>
+                  </td>
+
+                  <td>
+                    <strong className="a-catalog-price">
+                      {money(item.price)}
+                    </strong>
+                  </td>
+
                   <td>
                     <button
                       type="button"
-                      className={`admin-availability ${
-                        item.availability ? 'available' : 'soldout'
+                      className={`a-catalog-availability ${
+                        item.availability ? 'is-available' : 'is-soldout'
                       }`}
-                      onClick={() => toggleAvailability(item.id)}
+                      onClick={() => toggleItemAvailability(item.id)}
+                      aria-label={`Mark ${item.name} ${
+                        item.availability ? 'sold out' : 'available'
+                      }`}
                     >
+                      <span />
                       {item.availability ? 'Available' : 'Sold Out'}
                     </button>
                   </td>
+
                   <td>
-                    <div className="admin-table-actions">
+                    <div className="a-catalog-actions">
                       <button
-                        className="btn btn-outline btn-small"
-                        onClick={() => handleEdit(item)}
+                        type="button"
+                        className="a-catalog-edit"
+                        onClick={() => {
+                          setEditingItem(item);
+                          setShowForm(true);
+                        }}
                       >
+                        <Icon name="pencil" size={15} />
                         Edit
                       </button>
 
                       <button
-                        className="btn btn-small admin-delete-btn"
-                        onClick={() => handleDelete(item.id)}
+                        type="button"
+                        className="a-catalog-delete"
+                        onClick={() => handleDelete(item)}
                       >
+                        <Icon name="trash" size={15} />
                         Delete
                       </button>
                     </div>
@@ -169,16 +288,24 @@ export default function MenuManagement() {
 
               {filteredItems.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="admin-empty">
-                    No menu items found.
+                  <td colSpan={5} className="admin-empty">
+                    No menu items match your filters.
+                    <div>
+                      <button
+                        type="button"
+                        className="btn btn-outline btn-small"
+                        onClick={resetFilters}
+                      >
+                        Clear Filters
+                      </button>
+                    </div>
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </section>
     </section>
   );
 }
-
