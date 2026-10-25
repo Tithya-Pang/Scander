@@ -4,7 +4,7 @@ import "dotenv/config";
 
 import authRoutes from "./routes/auth.js";
 import kitchenRoutes from "./routes/kitchen.js";
-
+import menuRoutes from "./routes/menu.js";
 
 const app = express();
 
@@ -29,6 +29,7 @@ app.get("/health", (req, res) => {
 app.use("/auth", authRoutes);
 
 app.use("/kitchen", kitchenRoutes);
+app.use("/menu", menuRoutes);
 
 // Handle unknown routes
 app.use((req, res) => {
