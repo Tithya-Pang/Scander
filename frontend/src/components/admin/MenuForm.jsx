@@ -1,31 +1,58 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-const MAX_IMAGE_SIZE = 500 * 1024; // 500 KB
+const MAX_IMAGE_SIZE = 500 * 1024;
+
+const ALLOWED_TYPES = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+];
 
 export default function MenuForm({
   item,
   categories,
   onSave,
-  onCancel
+  onCancel,
+  saving = false,
+  saveError = '',
 }) {
   const [form, setForm] = useState({
     name: item?.name || '',
     category: item?.category || categories[0] || '',
     price: item?.price ?? '',
     description: item?.description || '',
-    image: item?.image || ''
+    image: item?.image || '',
   });
 
+  const [imageFile, setImageFile] = useState(null);
   const [imageError, setImageError] = useState('');
-  const [imageLoading, setImageLoading] = useState(false);
+
+  // Show a temporary preview for the selected file.
+  const [previewUrl, setPreviewUrl] = useState(
+    item?.image || ''
+  );
+
+  useEffect(() => {
+    if (!imageFile) {
+      setPreviewUrl(form.image || '');
+      return;
+    }
+
+    const url = URL.createObjectURL(imageFile);
+    setPreviewUrl(url);
+
+    return () => {
+      URL.revokeObjectURL(url);
+    };
+  }, [imageFile, form.image]);
 
   function handleChange(event) {
     const { name, value } = event.target;
 
     setForm(previous => ({
       ...previous,
-      [name]: value
+      [name]: value,
     }));
   }
 
@@ -36,40 +63,36 @@ export default function MenuForm({
 
     setImageError('');
 
-    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    if (!ALLOWED_TYPES.includes(file.type)) {
       setImageError('Choose a JPG, PNG, or WebP image.');
       event.target.value = '';
       return;
     }
 
     if (file.size > MAX_IMAGE_SIZE) {
-      setImageError('Image must be smaller than 500 KB.');
+      setImageError('Image must be 500 KB or smaller.');
       event.target.value = '';
       return;
     }
 
-    setImageLoading(true);
+    setImageFile(file);
+  }
 
-    const reader = new FileReader();
+  function removeImage() {
+    if (saving) return;
 
-    reader.onload = () => {
-      setForm(previous => ({
-        ...previous,
-        image: String(reader.result)
-      }));
-      setImageLoading(false);
-    };
-
-    reader.onerror = () => {
-      setImageError('Could not read this picture. Try another one.');
-      setImageLoading(false);
-    };
-
-    reader.readAsDataURL(file);
+    setImageFile(null);
+    setForm(previous => ({
+      ...previous,
+      image: '',
+    }));
+    setImageError('');
   }
 
   function handleSubmit(event) {
     event.preventDefault();
+
+    if (saving) return;
 
     const price = Number(form.price);
 
@@ -78,19 +101,25 @@ export default function MenuForm({
       !form.category ||
       form.price === '' ||
       !Number.isFinite(price) ||
-      price <= 0
+      price <= 0 ||
+      Math.abs(
+        price * 100 - Math.round(price * 100)
+      ) > 0.000001
     ) {
-      alert('Enter a valid item name, category, and price.');
+      alert(
+        'Enter a valid item name, category, and price with up to 2 decimal places.'
+      );
       return;
     }
 
-    if (imageLoading) return;
+    if (imageError) return;
 
     onSave({
       ...form,
       name: form.name.trim(),
       description: form.description.trim(),
-      price
+      price,
+      imageFile,
     });
   }
 
@@ -98,34 +127,56 @@ export default function MenuForm({
     <div className="card admin-form-card">
       <div className="admin-form-intro">
         <span className="eyebrow">MENU CATALOG</span>
-        <h2>{item ? 'Edit Menu Item' : 'Add New Menu Item'}</h2>
+
+        <h2>
+          {item ? 'Edit Menu Item' : 'Add New Menu Item'}
+        </h2>
+
         <p className="muted">
-          Add food details and a photo to help customers recognize your dishes.
+          Add food details and a picture to help
+          customers recognize your dishes.
         </p>
       </div>
 
-      <form className="admin-item-form" onSubmit={handleSubmit}>
+      <form
+        className="admin-item-form"
+        onSubmit={handleSubmit}
+      >
+        {/* FOOD PICTURE */}
         <div className="admin-form-section-title">
           Food Picture
         </div>
 
         <div className="admin-image-upload">
           <div className="admin-image-preview">
-            {form.image ? (
+            {previewUrl ? (
               <img
-                src={form.image}
+                src={previewUrl}
                 alt={`${form.name || 'Menu item'} preview`}
               />
             ) : (
               <div className="admin-image-empty">
-                <span className="admin-image-symbol">▧</span>
+                <span className="admin-image-symbol">
+                  ▧
+                </span>
                 <span>No picture selected</span>
               </div>
             )}
           </div>
 
           <div className="admin-image-upload-info">
-            <label htmlFor="item-image" className="admin-upload-button">
+            <label
+              htmlFor="item-image"
+              className="admin-upload-button"
+              style={
+                saving
+                  ? {
+                      opacity: 0.5,
+                      cursor: 'not-allowed',
+                    }
+                  : undefined
+              }
+            >
               Choose Picture
             </label>
 
@@ -135,47 +186,44 @@ export default function MenuForm({
               accept="image/jpeg,image/png,image/webp"
               onChange={handleImageChange}
               className="admin-file-input"
+              disabled={saving}
             />
 
             <p className="muted">
               JPG, PNG, or WebP · Maximum 500 KB
             </p>
 
-            {form.image && (
+            {previewUrl && (
               <button
                 type="button"
                 className="admin-remove-image"
-                onClick={() => {
-                  setForm(previous => ({
-                    ...previous,
-                    image: ''
-                  }));
-                  setImageError('');
-                }}
+                onClick={removeImage}
+                disabled={saving}
               >
                 Remove picture
               </button>
             )}
 
-            {imageLoading && (
-              <p role="status" className="muted">
-                Loading picture...
-              </p>
-            )}
-
             {imageError && (
-              <p role="alert" className="admin-image-error">
+              <p
+                role="alert"
+                className="admin-image-error"
+              >
                 {imageError}
               </p>
             )}
           </div>
         </div>
 
+        {/* ITEM INFORMATION */}
         <div className="admin-form-section-title">
           Item Information
         </div>
 
-        <label htmlFor="item-name">Item Name</label>
+        <label htmlFor="item-name">
+          Item Name
+        </label>
+
         <input
           id="item-name"
           type="text"
@@ -184,25 +232,36 @@ export default function MenuForm({
           value={form.name}
           onChange={handleChange}
           maxLength={100}
+          disabled={saving}
           required
         />
 
-        <label htmlFor="item-category">Category</label>
+        <label htmlFor="item-category">
+          Category
+        </label>
+
         <select
           id="item-category"
           name="category"
           value={form.category}
           onChange={handleChange}
+          disabled={saving}
           required
         >
           {categories.map(category => (
-            <option key={category} value={category}>
+            <option
+              key={category}
+              value={category}
+            >
               {category}
             </option>
           ))}
         </select>
 
-        <label htmlFor="item-price">Price ($)</label>
+        <label htmlFor="item-price">
+          Price ($)
+        </label>
+
         <input
           id="item-price"
           type="number"
@@ -212,10 +271,14 @@ export default function MenuForm({
           placeholder="0.00"
           value={form.price}
           onChange={handleChange}
+          disabled={saving}
           required
         />
 
-        <label htmlFor="item-description">Description</label>
+        <label htmlFor="item-description">
+          Description
+        </label>
+
         <textarea
           id="item-description"
           name="description"
@@ -224,13 +287,26 @@ export default function MenuForm({
           onChange={handleChange}
           rows={3}
           maxLength={500}
+          disabled={saving}
         />
 
+        {/* SAVE ERROR */}
+        {saveError && (
+          <p
+            role="alert"
+            className="admin-image-error"
+          >
+            {saveError}
+          </p>
+        )}
+
+        {/* FORM ACTIONS */}
         <div className="admin-form-actions">
           <button
             type="button"
             className="btn btn-outline"
             onClick={onCancel}
+            disabled={saving}
           >
             Cancel
           </button>
@@ -238,9 +314,13 @@ export default function MenuForm({
           <button
             type="submit"
             className="btn btn-primary"
-            disabled={imageLoading}
+            disabled={saving || !!imageError}
           >
-            {item ? 'Save Changes' : 'Add Menu Item'}
+            {saving
+              ? 'Saving...'
+              : item
+                ? 'Save Changes'
+                : 'Add Menu Item'}
           </button>
         </div>
       </form>
