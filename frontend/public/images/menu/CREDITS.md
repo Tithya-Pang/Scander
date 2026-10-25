@@ -14,3 +14,25 @@ Additional reference-layout photos:
 - Cappuccino: https://www.pexels.com/photo/a-cup-of-coffee-with-latte-art-in-close-up-shot-5246890/
 - Avocado toast: https://www.pexels.com/photo/avocado-toast-with-sunny-side-up-egg-8335331/
 - Chocolate cake: https://www.pexels.com/photo/slice-of-chocolate-cake-291528/
+
+User-supplied dish photos, preserved from the build output:
+- `creamy-salmon-pasta-alfredo.png` (original: `Creamy-Salmon-Pasta-Alfredo.png`)
+- `khmer-spiced-seafood-rice.png` (original: `Khmer Spiced Stir Fried Seafood with Rice.png`)
+These two images were supplied by the project owner; their original source was not provided.
+
+- `classic-crispy-chicken-burger.png`: user-supplied Classic Crispy Chicken Burger photo.
+
+Additional user-supplied menu photos:
+- `crispy-prawns-tamarind-glaze.png`: Crispy Prawns with Tamarind Glaze.
+- `pork-belly-kimchi.png`: Pork Belly With Kimchi.
+- `iced-matcha-latte.png`: Iced Matcha Latte.
+- `matcha-coconut-smoothie.png`: Matcha Coconut Smoothie (M).
+- `hot-matcha-latte.png`: Hot Matcha Latte (M).
+
+Additional user-supplied menu photos:
+- `crispy-chicken-sandwich.png`: Crispy Chicken Sandwich.
+- `grilled-steak-salmon-with-fries.png`: Grilled Steak Salmon With Fries.
+- `beef-stew-with-baguette.png`: Beef Stew With Baguette.
+- `loklak-pizza.png`: LokLak Pizza.
+- `hot-cappuccino.png`: Hot Cappuccino.
+- `shrimp-paste-fried-rice.png`: Shrimp Paste Fried Rice.

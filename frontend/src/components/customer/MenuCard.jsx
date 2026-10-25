@@ -5,7 +5,7 @@ export default function MenuCard({ item, onAdd }) {
 
   return <article className="card menu-card">
     <div className="menu-image">
-      {imageFailed ? <span className="muted">Photo unavailable</span> :
+      {imageFailed || !item.image ? <span className="muted">Photo coming soon</span> :
         <img src={item.image} alt={item.name} loading="lazy" decoding="async"
           style={{ objectPosition: item.imagePosition || 'center' }}
           onError={() => setImageFailed(true)} />}
@@ -14,8 +14,8 @@ export default function MenuCard({ item, onAdd }) {
       <h2>{item.name}</h2>
       <p className="muted">{item.description}</p>
       <div className="menu-bottom">
-        <strong>${item.price.toFixed(2)}</strong>
-        <button className="btn btn-primary btn-small" aria-label={`Add ${item.name}`} onClick={() => onAdd(item)}>Add +</button>
+        <strong>{item.price == null ? 'Price coming soon' : `$${item.price.toFixed(2)}`}</strong>
+        <button className="btn btn-primary btn-small" aria-label={`Add ${item.name}`} disabled={item.price == null} onClick={() => onAdd(item)}>Add +</button>
       </div>
     </div>
   </article>;
