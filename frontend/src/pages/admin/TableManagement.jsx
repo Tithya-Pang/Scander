@@ -1,44 +1,172 @@
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 import Icon from '../../components/common/Icon';
-import TableForm from '../../components/admin/TableForm';
 
-const initialTables = [
-  { id: 1, name: 'Table 01', capacity: 4, status: 'Available' },
-  { id: 2, name: 'Table 02', capacity: 2, status: 'Occupied' },
-  { id: 3, name: 'Table 03', capacity: 6, status: 'Available' },
-  { id: 4, name: 'Table 04', capacity: 4, status: 'Occupied' },
-  { id: 5, name: 'Table 05', capacity: 2, status: 'Available' },
-  { id: 6, name: 'Table 06', capacity: 8, status: 'Maintenance' },
-  { id: 7, name: 'Table 07', capacity: 4, status: 'Available' },
-  { id: 8, name: 'Table 08', capacity: 4, status: 'Available' }
-];
+import {
+  getAdminTables,
+  createAdminTable,
+  updateAdminTable,
+  setAdminTableActive,
+} from '../../services/adminTableService';
 
-const statuses = ['Available', 'Occupied', 'Maintenance'];
+// ==========================================
+// HELPERS
+// ==========================================
 
-const statusIcons = {
-  Available: 'checkCircle',
-  Occupied: 'user',
-  Maintenance: 'settings'
-};
+const statuses = ['Active', 'Inactive'];
 
-function TableQRCodeDialog({ table, onClose, getTableUrl }) {
+function convertTable(record) {
+  return {
+    id: record.table_id,
+    name: record.table_number,
+    qrToken: record.qr_token,
+    isActive: record.is_active,
+    status: record.is_active ? 'Active' : 'Inactive',
+  };
+}
+
+function getTableUrl(table) {
+  const url = new URL(
+    '/customer/menu',
+    window.location.origin
+  );
+
+  // Keep the existing table parameter for compatibility.
+  url.searchParams.set('table', String(table.id));
+
+  // Real token generated and stored by Supabase.
+  url.searchParams.set('qr_token', table.qrToken);
+
+  return url.toString();
+}
+
+// ==========================================
+// ADD / EDIT FORM
+// ==========================================
+
+function TableEditor({
+  table,
+  onSave,
+  onCancel,
+  saving,
+}) {
+  const [name, setName] = useState(table?.name || '');
+
+  function handleSubmit(event) {
+    event.preventDefault();
+
+    const trimmedName = name.trim();
+
+    if (!trimmedName || trimmedName.length > 20) {
+      return;
+    }
+
+    onSave(trimmedName);
+  }
+
+  return (
+    <section className="card admin-form-card">
+      <div className="admin-form-intro">
+        <span className="eyebrow">
+          RESTAURANT TABLES
+        </span>
+
+        <h2>
+          {table ? 'Edit Table' : 'Add New Table'}
+        </h2>
+
+        <p>
+          {table
+            ? 'Update the name of this restaurant table.'
+            : 'Create a new table with a unique QR code.'}
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        <div className="admin-form-field">
+          <label htmlFor="table-number">
+            Table Name
+          </label>
+
+          <input
+            id="table-number"
+            type="text"
+            value={name}
+            onChange={event =>
+              setName(event.target.value)
+            }
+            maxLength={20}
+            placeholder="Example: Table 01"
+            required
+            disabled={saving}
+          />
+        </div>
+
+        <p className="muted">
+          Maximum 20 characters.
+          Each table needs a unique name.
+        </p>
+
+        <div className="admin-form-actions">
+          <button
+            type="button"
+            className="btn btn-outline"
+            onClick={onCancel}
+            disabled={saving}
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={
+              saving ||
+              !name.trim() ||
+              name.trim().length > 20
+            }
+          >
+            {saving
+              ? 'Saving...'
+              : table
+                ? 'Save Changes'
+                : 'Add Table'}
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+// ==========================================
+// QR CODE POPUP
+// ==========================================
+
+function TableQRCodeDialog({ table, onClose }) {
   const [copied, setCopied] = useState(false);
+
   const url = getTableUrl(table);
 
   useEffect(() => {
     function handleEscape(event) {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') {
+        onClose();
+      }
     }
 
-    document.addEventListener('keydown', handleEscape);
-
-    return () => document.removeEventListener(
+    document.addEventListener(
       'keydown',
       handleEscape
     );
+
+    return () => {
+      document.removeEventListener(
+        'keydown',
+        handleEscape
+      );
+    };
   }, [onClose]);
 
   async function copyUrl() {
@@ -46,14 +174,18 @@ function TableQRCodeDialog({ table, onClose, getTableUrl }) {
       await navigator.clipboard.writeText(url);
       setCopied(true);
     } catch {
-      // Clipboard access may be blocked by the browser.
-      setCopied(false);
-      window.prompt('Copy the menu link:', url);
+      window.prompt(
+        'Copy the customer menu link:',
+        url
+      );
     }
   }
 
   return (
-    <div className="a-qr-overlay" onClick={onClose}>
+    <div
+      className="a-qr-overlay"
+      onClick={onClose}
+    >
       <div
         className="a-qr-dialog"
         role="dialog"
@@ -63,9 +195,18 @@ function TableQRCodeDialog({ table, onClose, getTableUrl }) {
       >
         <header className="a-qr-header">
           <div>
-            <span className="eyebrow">TABLE QR CODE</span>
-            <h2 id="a-qr-title">{table.name}</h2>
-            <p>Scan to open the Gather Grounds customer menu.</p>
+            <span className="eyebrow">
+              TABLE QR CODE
+            </span>
+
+            <h2 id="a-qr-title">
+              {table.name}
+            </h2>
+
+            <p>
+              Scan to open the Gather Grounds
+              customer menu.
+            </p>
           </div>
 
           <button
@@ -81,10 +222,16 @@ function TableQRCodeDialog({ table, onClose, getTableUrl }) {
         <div className="a-qr-content">
           <div className="a-qr-brand">
             <span className="a-qr-brand-icon">
-              <Icon name="coffee" size={22} />
+              <Icon
+                name="coffee"
+                size={22}
+              />
             </span>
 
-            <strong>Gather Grounds<span>.</span></strong>
+            <strong>
+              Gather Grounds
+              <span>.</span>
+            </strong>
           </div>
 
           <div className="a-qr-paper">
@@ -97,14 +244,23 @@ function TableQRCodeDialog({ table, onClose, getTableUrl }) {
           </div>
 
           <h3>{table.name}</h3>
-          <p>Scan to explore our menu and place your order.</p>
+
+          <p>
+            Scan to explore our menu
+            and place your order.
+          </p>
+
           <span className="a-qr-demo-notice">
-            Frontend preview · Not for production
+            Customer QR validation
+            pending integration
           </span>
         </div>
 
         <div className="a-qr-link">
-          <small>Customer menu link</small>
+          <small>
+            Customer menu link
+          </small>
+
           <code>{url}</code>
         </div>
 
@@ -122,7 +278,11 @@ function TableQRCodeDialog({ table, onClose, getTableUrl }) {
             className="btn btn-outline"
             onClick={copyUrl}
           >
-            <Icon name={copied ? 'check' : 'file'} size={16} />
+            <Icon
+              name={copied ? 'check' : 'file'}
+              size={16}
+            />
+
             {copied ? 'Copied!' : 'Copy Link'}
           </button>
 
@@ -133,7 +293,11 @@ function TableQRCodeDialog({ table, onClose, getTableUrl }) {
             rel="noreferrer"
           >
             Open Menu
-            <Icon name="chevronRight" size={16} />
+
+            <Icon
+              name="chevronRight"
+              size={16}
+            />
           </a>
         </div>
       </div>
@@ -141,112 +305,273 @@ function TableQRCodeDialog({ table, onClose, getTableUrl }) {
   );
 }
 
+// ==========================================
+// TABLE MANAGEMENT PAGE
+// ==========================================
+
 export default function TableManagement() {
-  const [tables, setTables] = useState(initialTables);
+  const [tables, setTables] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [busyTableId, setBusyTableId] = useState(null);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
 
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
+  const [statusFilter, setStatusFilter] =
+    useState('All');
 
-  const [editingTable, setEditingTable] = useState(null);
+  const [editingTable, setEditingTable] =
+    useState(null);
+
   const [showForm, setShowForm] = useState(false);
-  const [selectedTableId, setSelectedTableId] = useState(null);
 
-  const selectedTable = tables.find(
-    table => table.id === selectedTableId
-  ) || null;
+  const [selectedTableId, setSelectedTableId] =
+    useState(null);
+
+  // ==========================================
+  // FETCH TABLES FROM BACKEND
+  // ==========================================
+
+  const loadTables = useCallback(async () => {
+    setLoading(true);
+    setError('');
+
+    try {
+      const records = await getAdminTables();
+
+      setTables(records.map(convertTable));
+    } catch (err) {
+      console.error(
+        'Failed to load tables:',
+        err
+      );
+
+      setError(
+        err.message || 'Unable to load tables.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadTables();
+  }, [loadTables]);
+
+  // ==========================================
+  // SELECTED TABLE FOR QR POPUP
+  // ==========================================
+
+  const selectedTable =
+    tables.find(
+      table => table.id === selectedTableId
+    ) || null;
+
+  // ==========================================
+  // SUMMARY COUNTS
+  // ==========================================
 
   const counts = {
-    Available: tables.filter(t => t.status === 'Available').length,
-    Occupied: tables.filter(t => t.status === 'Occupied').length,
-    Maintenance: tables.filter(t => t.status === 'Maintenance').length
+    Active: tables.filter(
+      table => table.isActive
+    ).length,
+
+    Inactive: tables.filter(
+      table => !table.isActive
+    ).length,
   };
 
+  // ==========================================
+  // SEARCH AND FILTER
+  // ==========================================
+
   const filteredTables = tables.filter(table => {
-    const matchesName = table.name
+    const matchesSearch = table.name
       .toLowerCase()
       .includes(search.trim().toLowerCase());
 
     const matchesStatus =
-      statusFilter === 'All' || table.status === statusFilter;
+      statusFilter === 'All' ||
+      table.status === statusFilter;
 
-    return matchesName && matchesStatus;
+    return matchesSearch && matchesStatus;
   });
+
+  // ==========================================
+  // FORM ACTIONS
+  // ==========================================
 
   function openAddForm() {
     setEditingTable(null);
     setShowForm(true);
+    setError('');
+    setNotice('');
   }
 
   function openEditForm(table) {
     setEditingTable(table);
     setShowForm(true);
+    setError('');
+    setNotice('');
   }
 
   function closeForm() {
+    if (saving) return;
+
     setEditingTable(null);
     setShowForm(false);
   }
 
-  function handleSave(formData) {
-    const duplicate = tables.some(table =>
-      table.name.toLowerCase() === formData.name.toLowerCase() &&
-      table.id !== editingTable?.id
+  // ==========================================
+  // ADD / UPDATE TABLE
+  // ==========================================
+
+  async function handleSave(name) {
+    const trimmedName = name.trim();
+
+    if (
+      !trimmedName ||
+      trimmedName.length > 20
+    ) {
+      setError(
+        'Table name must contain 1 to 20 characters.'
+      );
+      return;
+    }
+
+    const duplicate = tables.some(
+      table =>
+        table.name.toLowerCase() ===
+          trimmedName.toLowerCase() &&
+        table.id !== editingTable?.id
     );
 
     if (duplicate) {
-      alert('A table with this name already exists.');
+      setError(
+        'A table with this name already exists.'
+      );
       return;
     }
 
-    if (editingTable) {
-      setTables(previous => previous.map(table =>
-        table.id === editingTable.id
-          ? { ...table, ...formData }
-          : table
-      ));
-    } else {
-      const newId = Math.max(0, ...tables.map(t => t.id)) + 1;
+    setSaving(true);
+    setError('');
+    setNotice('');
 
-      setTables(previous => [
-        ...previous,
-        {
-          id: newId,
-          ...formData,
-          status: 'Available'
-        }
-      ]);
+    try {
+      if (editingTable) {
+        await updateAdminTable(
+          editingTable.id,
+          trimmedName
+        );
+
+        setNotice(
+          'Table updated successfully.'
+        );
+      } else {
+        await createAdminTable(trimmedName);
+
+        setNotice(
+          'Table created successfully.'
+        );
+      }
+
+      setShowForm(false);
+      setEditingTable(null);
+
+      await loadTables();
+    } catch (err) {
+      console.error(
+        'Failed to save table:',
+        err
+      );
+
+      setError(
+        err.message || 'Unable to save table.'
+      );
+    } finally {
+      setSaving(false);
     }
-
-    closeForm();
   }
 
-  function changeStatus(id, status) {
-    if (!statuses.includes(status)) return;
+  // ==========================================
+  // ACTIVATE / DEACTIVATE TABLE
+  // ==========================================
 
-    setTables(previous => previous.map(table =>
-      table.id === id ? { ...table, status } : table
-    ));
-  }
+  async function changeStatus(table, newStatus) {
+    const newIsActive = newStatus === 'Active';
 
-  function handleDelete(table) {
-    if (table.status === 'Occupied') {
-      alert('Occupied tables cannot be deleted.');
+    if (table.isActive === newIsActive) {
       return;
     }
 
-    const confirmed = window.confirm(
-      `Delete "${table.name}"?`
-    );
+    if (!newIsActive) {
+      const confirmed = window.confirm(
+        `Deactivate "${table.name}"?\n\n` +
+        'Its QR code should no longer be accepted ' +
+        'for new orders once customer-side validation ' +
+        'is connected.'
+      );
 
-    if (!confirmed) return;
-
-    setTables(previous => previous.filter(
-      entry => entry.id !== table.id
-    ));
-
-    if (selectedTableId === table.id) {
-      setSelectedTableId(null);
+      if (!confirmed) return;
     }
+
+    setBusyTableId(table.id);
+    setError('');
+    setNotice('');
+
+    try {
+      await setAdminTableActive(
+        table.id,
+        newIsActive
+      );
+
+      setTables(previous =>
+        previous.map(entry =>
+          entry.id === table.id
+            ? {
+                ...entry,
+                isActive: newIsActive,
+                status: newIsActive
+                  ? 'Active'
+                  : 'Inactive',
+              }
+            : entry
+        )
+      );
+
+      setNotice(
+        `${table.name} is now ${
+          newIsActive ? 'active' : 'inactive'
+        }.`
+      );
+    } catch (err) {
+      console.error(
+        'Failed to update table status:',
+        err
+      );
+
+      setError(
+        err.message ||
+        'Unable to update table status.'
+      );
+
+      // Restore the server's current state.
+      await loadTables();
+    } finally {
+      setBusyTableId(null);
+    }
+  }
+
+  // ==========================================
+  // DEACTIVATE INSTEAD OF DELETE
+  // ==========================================
+
+  async function handleDeactivate(table) {
+    if (!table.isActive) return;
+
+    await changeStatus(table, 'Inactive');
   }
 
   function resetFilters() {
@@ -254,21 +579,25 @@ export default function TableManagement() {
     setStatusFilter('All');
   }
 
-  // Keep the table ID stable even when its name changes.
-  function getTableUrl(table) {
-    const url = new URL('/customer/menu', window.location.origin);
-    url.searchParams.set('table', String(table.id));
-    return url.toString();
-  }
+  // ==========================================
+  // PAGE UI
+  // ==========================================
 
   return (
     <section className="a-tables-page">
+
+      {/* HEADER */}
       <header className="a-tables-heading">
         <div>
-          <span className="eyebrow">RESTAURANT MANAGEMENT</span>
+          <span className="eyebrow">
+            RESTAURANT MANAGEMENT
+          </span>
+
           <h1>Table Management</h1>
+
           <p>
-            Manage seating, table availability, and ordering QR codes.
+            Manage restaurant tables,
+            ordering access, and QR codes.
           </p>
         </div>
 
@@ -276,38 +605,38 @@ export default function TableManagement() {
           type="button"
           className="btn btn-primary"
           onClick={openAddForm}
+          disabled={loading}
         >
-          <Icon name="plus" size={18} />
+          <Icon
+            name="plus"
+            size={18}
+          />
+
           Add Table
         </button>
       </header>
 
+      {/* SUMMARY CARDS */}
       <div className="a-tables-stats">
         {[
           {
             label: 'Total Tables',
             value: tables.length,
             tone: 'slate',
-            icon: 'grid'
+            icon: 'grid',
           },
           {
-            label: 'Available',
-            value: counts.Available,
+            label: 'Active',
+            value: counts.Active,
             tone: 'green',
-            icon: 'checkCircle'
+            icon: 'checkCircle',
           },
           {
-            label: 'Occupied',
-            value: counts.Occupied,
-            tone: 'amber',
-            icon: 'user'
-          },
-          {
-            label: 'Maintenance',
-            value: counts.Maintenance,
+            label: 'Inactive',
+            value: counts.Inactive,
             tone: 'purple',
-            icon: 'settings'
-          }
+            icon: 'settings',
+          },
         ].map(stat => (
           <article
             key={stat.label}
@@ -315,55 +644,120 @@ export default function TableManagement() {
           >
             <div>
               <span>{stat.label}</span>
-              <Icon name={stat.icon} size={21} />
+
+              <Icon
+                name={stat.icon}
+                size={21}
+              />
             </div>
-            <strong>{stat.value}</strong>
+
+            <strong>
+              {loading ? '...' : stat.value}
+            </strong>
           </article>
         ))}
       </div>
 
+      {/* NOTIFICATIONS */}
+      {error && (
+        <p
+          role="alert"
+          style={{
+            color: '#b42318',
+            marginBottom: 16,
+          }}
+        >
+          {error}
+        </p>
+      )}
+
+      {notice && (
+        <p
+          role="status"
+          style={{
+            color: '#287444',
+            marginBottom: 16,
+          }}
+        >
+          {notice}
+        </p>
+      )}
+
+      {/* ADD / EDIT FORM */}
       {showForm && (
-        <TableForm
+        <TableEditor
           key={editingTable?.id ?? 'new'}
           table={editingTable}
           onSave={handleSave}
           onCancel={closeForm}
+          saving={saving}
         />
       )}
 
+      {/* RESTAURANT TABLES */}
       <section className="card a-tables-panel">
+
         <div className="a-tables-panel-header">
           <div>
             <h2>Restaurant Tables</h2>
-            <p>{filteredTables.length} tables found</p>
+
+            <p>
+              {loading
+                ? 'Loading restaurant tables...'
+                : `${filteredTables.length} tables found`}
+            </p>
           </div>
 
-          <span className="a-tables-demo">
-            <Icon name="file" size={15} />
-            Demo data
-          </span>
+          <button
+            type="button"
+            className="btn btn-outline btn-small"
+            onClick={loadTables}
+            disabled={loading}
+          >
+            <Icon
+              name="refresh"
+              size={15}
+            />
+
+            Refresh
+          </button>
         </div>
 
+        {/* FILTERS */}
         <div className="a-tables-filters">
           <label className="a-tables-search">
-            <Icon name="search" size={19} />
+            <Icon
+              name="search"
+              size={19}
+            />
+
             <input
               type="search"
               placeholder="Search tables..."
               value={search}
-              onChange={event => setSearch(event.target.value)}
+              onChange={event =>
+                setSearch(event.target.value)
+              }
               aria-label="Search tables"
             />
           </label>
 
           <select
             value={statusFilter}
-            onChange={event => setStatusFilter(event.target.value)}
+            onChange={event =>
+              setStatusFilter(event.target.value)
+            }
             aria-label="Filter table status"
           >
-            <option value="All">All Statuses</option>
+            <option value="All">
+              All Statuses
+            </option>
+
             {statuses.map(status => (
-              <option key={status} value={status}>
+              <option
+                key={status}
+                value={status}
+              >
                 {status}
               </option>
             ))}
@@ -376,16 +770,20 @@ export default function TableManagement() {
             aria-label="Reset filters"
             title="Reset filters"
           >
-            <Icon name="refresh" size={19} />
+            <Icon
+              name="refresh"
+              size={19}
+            />
           </button>
         </div>
 
+        {/* TABLE LIST */}
         <div className="table-scroll">
           <table className="a-tables-table">
             <thead>
               <tr>
                 <th>TABLE</th>
-                <th>SEATING</th>
+                <th>QR ACCESS</th>
                 <th>STATUS</th>
                 <th>QR CODE</th>
                 <th>ACTIONS</th>
@@ -393,114 +791,207 @@ export default function TableManagement() {
             </thead>
 
             <tbody>
-              {filteredTables.map(table => (
-                <tr key={table.id}>
-                  <td>
-                    <div className="a-table-name-cell">
-                      <span className="a-table-icon">
-                        <Icon name="grid" size={20} />
-                      </span>
-
-                      <div>
-                        <strong>{table.name}</strong>
-                        <small>Table ID: {table.id}</small>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td>
-                    <span className="a-table-capacity">
-                      <Icon name="user" size={16} />
-                      {table.capacity} seats
-                    </span>
-                  </td>
-
-                  <td>
-                    <label className={`a-table-status a-table-status-${table.status.toLowerCase()}`}>
-                      <Icon name={statusIcons[table.status]} size={16} />
-                      <select
-                        value={table.status}
-                        onChange={event =>
-                          changeStatus(table.id, event.target.value)
-                        }
-                        aria-label={`Status for ${table.name}`}
-                      >
-                        {statuses.map(status => (
-                          <option key={status} value={status}>
-                            {status}
-                          </option>
-                        ))}
-                      </select>
-                    </label>
-                  </td>
-
-                  <td>
-                    <button
-                      type="button"
-                      className="a-table-qr-button"
-                      onClick={() => setSelectedTableId(table.id)}
-                    >
-                      <Icon name="grid" size={17} />
-                      View QR
-                    </button>
-                  </td>
-
-                  <td>
-                    <div className="a-table-actions">
-                      <button
-                        type="button"
-                        className="a-catalog-edit"
-                        onClick={() => openEditForm(table)}
-                      >
-                        <Icon name="pencil" size={15} />
-                        Edit
-                      </button>
-
-                      <button
-                        type="button"
-                        className="a-catalog-delete"
-                        onClick={() => handleDelete(table)}
-                        disabled={table.status === 'Occupied'}
-                        title={
-                          table.status === 'Occupied'
-                            ? 'Occupied tables cannot be deleted'
-                            : 'Delete table'
-                        }
-                      >
-                        <Icon name="trash" size={15} />
-                        Delete
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-
-              {filteredTables.length === 0 && (
+              {loading && (
                 <tr>
-                  <td colSpan={5} className="admin-empty">
-                    No matching tables found.
-                    <div>
-                      <button
-                        type="button"
-                        className="btn btn-outline btn-small"
-                        onClick={resetFilters}
-                      >
-                        Clear Filters
-                      </button>
-                    </div>
+                  <td
+                    colSpan={5}
+                    className="admin-empty"
+                  >
+                    Loading tables...
                   </td>
                 </tr>
               )}
+
+              {!loading &&
+                filteredTables.map(table => (
+                  <tr key={table.id}>
+
+                    {/* TABLE NAME */}
+                    <td>
+                      <div className="a-table-name-cell">
+                        <span className="a-table-icon">
+                          <Icon
+                            name="grid"
+                            size={20}
+                          />
+                        </span>
+
+                        <div>
+                          <strong>
+                            {table.name}
+                          </strong>
+
+                          <small>
+                            Table ID: {table.id}
+                          </small>
+                        </div>
+                      </div>
+                    </td>
+
+                    {/* QR ACCESS */}
+                    <td>
+                      <span className="a-table-capacity">
+                        <Icon
+                          name={
+                            table.isActive
+                              ? 'checkCircle'
+                              : 'lock'
+                          }
+                          size={16}
+                        />
+
+                        {table.isActive
+                          ? 'Enabled'
+                          : 'Disabled'}
+                      </span>
+                    </td>
+
+                    {/* STATUS */}
+                    <td>
+                      <label
+                        className={`a-table-status a-table-status-${
+                          table.isActive
+                            ? 'available'
+                            : 'maintenance'
+                        }`}
+                      >
+                        <Icon
+                          name={
+                            table.isActive
+                              ? 'checkCircle'
+                              : 'settings'
+                          }
+                          size={16}
+                        />
+
+                        <select
+                          value={table.status}
+                          disabled={
+                            busyTableId === table.id
+                          }
+                          onChange={event =>
+                            changeStatus(
+                              table,
+                              event.target.value
+                            )
+                          }
+                          aria-label={`Status for ${table.name}`}
+                        >
+                          {statuses.map(status => (
+                            <option
+                              key={status}
+                              value={status}
+                            >
+                              {status}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                    </td>
+
+                    {/* QR CODE */}
+                    <td>
+                      <button
+                        type="button"
+                        className="a-table-qr-button"
+                        disabled={
+                          !table.isActive ||
+                          !table.qrToken
+                        }
+                        onClick={() =>
+                          setSelectedTableId(
+                            table.id
+                          )
+                        }
+                      >
+                        <Icon
+                          name="grid"
+                          size={17}
+                        />
+
+                        View QR
+                      </button>
+                    </td>
+
+                    {/* ACTIONS */}
+                    <td>
+                      <div className="a-table-actions">
+                        <button
+                          type="button"
+                          className="a-catalog-edit"
+                          onClick={() =>
+                            openEditForm(table)
+                          }
+                        >
+                          <Icon
+                            name="pencil"
+                            size={15}
+                          />
+
+                          Edit
+                        </button>
+
+                        <button
+                          type="button"
+                          className="a-catalog-delete"
+                          onClick={() =>
+                            handleDeactivate(table)
+                          }
+                          disabled={
+                            !table.isActive ||
+                            busyTableId === table.id
+                          }
+                          title={
+                            table.isActive
+                              ? 'Deactivate table'
+                              : 'Table already inactive'
+                          }
+                        >
+                          <Icon
+                            name="lock"
+                            size={15}
+                          />
+
+                          Deactivate
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+
+              {!loading &&
+                filteredTables.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="admin-empty"
+                    >
+                      No matching tables found.
+
+                      <div>
+                        <button
+                          type="button"
+                          className="btn btn-outline btn-small"
+                          onClick={resetFilters}
+                        >
+                          Clear Filters
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
             </tbody>
           </table>
         </div>
       </section>
 
-      {selectedTable && (
+      {/* QR CODE POPUP */}
+      {selectedTable && selectedTable.isActive && (
         <TableQRCodeDialog
           table={selectedTable}
-          onClose={() => setSelectedTableId(null)}
-          getTableUrl={getTableUrl}
+          onClose={() =>
+            setSelectedTableId(null)
+          }
         />
       )}
     </section>

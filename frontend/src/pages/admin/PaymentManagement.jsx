@@ -1,17 +1,38 @@
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Icon from '../../components/common/Icon';
-import PaymentDetails from '../../components/admin/PaymentDetails';
-import {
-  demoPayments,
-  getDemoPaymentTotal
-} from '../../data/demoPayments';
-// Demo records until payment APIs are connected.
+import { getAdminOrders } from '../../services/adminOrderService';
 
-const samplePayments = demoPayments;
-const getTotal = getDemoPaymentTotal;
+// ==========================================
+// HELPERS
+// ==========================================
 
-const money = value => `$${value.toFixed(2)}`;
+const PAGE_SIZE = 100;
+
+const money = value => {
+  if (value == null) return '—';
+  return `$${Number(value).toFixed(2)}`;
+};
+
+function formatDate(value) {
+  if (!value) return '—';
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return '—';
+  }
+
+  return date.toLocaleString('en-US', {
+    timeZone: 'Asia/Phnom_Penh',
+    dateStyle: 'medium',
+    timeStyle: 'short',
+  });
+}
+
+// ==========================================
+// SUMMARY CARD
+// ==========================================
 
 function PaymentStat({ label, value, hint, icon, tone }) {
   return (
@@ -20,58 +41,258 @@ function PaymentStat({ label, value, hint, icon, tone }) {
         <span>{label}</span>
         <Icon name={icon} size={22} />
       </div>
+
       <strong>{value}</strong>
       <small>{hint}</small>
     </article>
   );
 }
 
+// ==========================================
+// READ-ONLY ORDER DETAILS
+// ==========================================
+
+function PaymentOrderDetails({ order, onClose }) {
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      className="admin-order-overlay"
+      onClick={onClose}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 1000,
+        display: 'grid',
+        placeItems: 'center',
+        padding: 20,
+        background: 'rgba(15, 23, 42, 0.55)',
+      }}
+    >
+      <section
+        className="card"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="payment-order-heading"
+        onClick={event => event.stopPropagation()}
+        style={{
+          width: '100%',
+          maxWidth: 540,
+          maxHeight: '85vh',
+          overflowY: 'auto',
+          padding: 24,
+        }}
+      >
+        <span className="eyebrow">ORDER INFORMATION</span>
+
+        <h2 id="payment-order-heading">
+          {order.order_number || `#${order.order_id}`}
+        </h2>
+
+        <div style={{ marginTop: 20 }}>
+          <p>
+            <strong>Table: </strong>
+            {order.table_id != null
+              ? `Table ID ${order.table_id}`
+              : 'Not specified'}
+          </p>
+
+          <p>
+            <strong>Ordered At: </strong>
+            {formatDate(order.ordered_at)}
+          </p>
+
+          <p>
+            <strong>Order Amount: </strong>
+            {money(order.total_amount)}
+          </p>
+
+          <p>
+            <strong>Kitchen Status: </strong>
+            {order.status || 'Unknown'}
+          </p>
+
+          <p>
+            <strong>Payment Status: </strong>
+            Not tracked yet
+          </p>
+
+          <p>
+            <strong>Payment Method: </strong>
+            Not recorded
+          </p>
+        </div>
+
+        <div
+          style={{
+            padding: 14,
+            marginTop: 20,
+            borderRadius: 10,
+            background: 'var(--surface, #f4f7f5)',
+          }}
+        >
+          <strong>Payment tracking not connected</strong>
+
+          <p style={{ marginTop: 6, fontSize: 14 }}>
+            This is a real order from Supabase.
+            A payment record has not been retrieved
+            because the payment module is not
+            implemented yet.
+          </p>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            marginTop: 20,
+          }}
+        >
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={onClose}
+          >
+            Close
+          </button>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ==========================================
+// PAYMENT MANAGEMENT
+// ==========================================
+
 export default function PaymentManagement() {
+  const [orders, setOrders] = useState([]);
+
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [methodFilter, setMethodFilter] = useState('All');
+
   const [selectedPayment, setSelectedPayment] = useState(null);
 
-  const paidPayments = samplePayments.filter(
-    payment => payment.status === 'Paid'
-  );
+  // ==========================================
+  // GET REAL ORDERS
+  // ==========================================
 
-  const unpaidPayments = samplePayments.filter(
-    payment => payment.status === 'Unpaid'
-  );
+  useEffect(() => {
+    let cancelled = false;
 
-  const totalCollected = paidPayments.reduce(
-    (sum, payment) => sum + getTotal(payment),
-    0
-  );
+    async function loadOrders() {
+      setLoading(true);
+      setError('');
 
-  const outstanding = unpaidPayments.reduce(
-    (sum, payment) => sum + getTotal(payment),
-    0
-  );
+      try {
+        const result = await getAdminOrders(
+          1,
+          PAGE_SIZE
+        );
 
-  const filteredPayments = samplePayments.filter(payment => {
+        if (cancelled) return;
+
+        setOrders(result.orders);
+        setTotalOrders(
+          Number(
+            result.pagination?.total ??
+            result.orders.length
+          )
+        );
+      } catch (err) {
+        if (cancelled) return;
+
+        console.error('Failed to load orders:', err);
+
+        setOrders([]);
+        setTotalOrders(0);
+
+        setError(
+          err.message || 'Unable to retrieve orders.'
+        );
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadOrders();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [refreshKey]);
+
+  // ==========================================
+  // ORDER AMOUNT SUMMARY
+  // ==========================================
+
+  // This is NOT collected revenue.
+  // It only represents the value of loaded orders.
+  const loadedOrderValue = orders
+    .filter(order => order.status !== 'CANCELLED')
+    .reduce(
+      (sum, order) =>
+        sum + Number(order.total_amount || 0),
+      0
+    );
+
+  // ==========================================
+  // SEARCH AND FILTER
+  // ==========================================
+
+  const filteredOrders = orders.filter(order => {
     const query = search.trim().toLowerCase();
 
     const matchesSearch =
-      payment.orderId.toLowerCase().includes(query) ||
-      payment.table.toLowerCase().includes(query) ||
-      payment.items.some(item =>
-        item.name.toLowerCase().includes(query)
-      );
+      !query ||
+      String(order.order_number || '')
+        .toLowerCase()
+        .includes(query) ||
+      String(order.order_id).includes(query) ||
+      String(order.table_id ?? '')
+        .includes(query);
 
+    // All existing orders have an unknown payment
+    // status until payment tracking is implemented.
     const matchesStatus =
       statusFilter === 'All' ||
-      payment.status === statusFilter;
+      statusFilter === 'Not Tracked';
 
     const matchesMethod =
       methodFilter === 'All' ||
-      (methodFilter === 'None'
-        ? !payment.method
-        : payment.method === methodFilter);
+      methodFilter === 'Not Recorded';
 
-    return matchesSearch && matchesStatus && matchesMethod;
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesMethod
+    );
   });
+
+  // ==========================================
+  // FUNCTIONS
+  // ==========================================
 
   function resetFilters() {
     setSearch('');
@@ -79,87 +300,129 @@ export default function PaymentManagement() {
     setMethodFilter('All');
   }
 
+  function refreshOrders() {
+    setSelectedPayment(null);
+    setRefreshKey(previous => previous + 1);
+  }
+
+  // ==========================================
+  // UI
+  // ==========================================
+
   return (
     <section className="a-payments-page">
 
-      {/* Page heading */}
+      {/* PAGE HEADER */}
       <header className="a-payments-heading">
         <div>
-          <span className="eyebrow">FINANCIAL OVERVIEW</span>
+          <span className="eyebrow">
+            FINANCIAL OVERVIEW
+          </span>
+
           <h1>Payment Management</h1>
+
           <p>
-            Monitor payment records, transaction status, and receipts.
+            Review order amounts while payment tracking
+            is being implemented.
           </p>
         </div>
 
         <span className="a-payments-demo">
-          <Icon name="file" size={16} />
-          Demo transactions
+          <Icon name="clock" size={16} />
+          Payment tracking pending
         </span>
       </header>
 
-      {/* Summary cards */}
+      {/* SUMMARY CARDS */}
       <div className="a-payment-stats">
         <PaymentStat
-          label="Total Collected"
-          value={money(totalCollected)}
-          hint="Sample paid transactions"
-          icon="checkCircle"
+          label="Order Value Loaded"
+          value={
+            loading
+              ? '...'
+              : error
+                ? '—'
+                : money(loadedOrderValue)
+          }
+          hint="Not confirmed payment revenue"
+          icon="bag"
           tone="green"
         />
 
         <PaymentStat
           label="Paid Orders"
-          value={paidPayments.length}
-          hint="Marked paid in demo data"
+          value="—"
+          hint="Payment records not connected"
           icon="check"
           tone="blue"
         />
 
         <PaymentStat
           label="Unpaid Orders"
-          value={unpaidPayments.length}
-          hint="Pending demonstration payments"
+          value="—"
+          hint="Cannot determine from kitchen status"
           icon="clock"
           tone="amber"
         />
 
         <PaymentStat
           label="Outstanding"
-          value={money(outstanding)}
-          hint="Sample unpaid order totals"
+          value="—"
+          hint="Requires verified payment records"
           icon="alert"
           tone="purple"
         />
       </div>
 
-      {/* Payment records */}
+      {/* PAYMENT LIST */}
       <section className="card a-payments-panel">
         <div className="a-payments-panel-head">
           <div>
-            <h2>Payment Records</h2>
+            <h2>Order Payment Overview</h2>
+
             <p>
-              {filteredPayments.length} matching transactions
+              {loading
+                ? 'Loading real orders...'
+                : `${filteredOrders.length} matching orders`}
             </p>
           </div>
 
-          <span className="a-payment-view-only">
-            <Icon name="lock" size={15} />
-            Monitoring only
-          </span>
+          <button
+            type="button"
+            className="btn btn-outline btn-small"
+            onClick={refreshOrders}
+            disabled={loading}
+          >
+            <Icon name="refresh" size={16} />
+            Refresh
+          </button>
         </div>
 
-        {/* Search and filters */}
+        {error && (
+          <p
+            role="alert"
+            style={{
+              color: '#b42318',
+              padding: '12px 0',
+            }}
+          >
+            {error}
+          </p>
+        )}
+
+        {/* FILTERS */}
         <div className="a-payments-filters">
           <label className="a-payments-search">
             <Icon name="search" size={19} />
 
             <input
               type="search"
-              placeholder="Search order, table, or item..."
+              placeholder="Search order or table..."
               value={search}
-              onChange={event => setSearch(event.target.value)}
-              aria-label="Search payments"
+              onChange={event =>
+                setSearch(event.target.value)
+              }
+              aria-label="Search orders"
             />
           </label>
 
@@ -168,11 +431,15 @@ export default function PaymentManagement() {
             onChange={event =>
               setStatusFilter(event.target.value)
             }
-            aria-label="Filter by payment status"
+            aria-label="Filter payment status"
           >
-            <option value="All">All Statuses</option>
-            <option value="Paid">Paid</option>
-            <option value="Unpaid">Unpaid</option>
+            <option value="All">
+              All Statuses
+            </option>
+
+            <option value="Not Tracked">
+              Not Tracked
+            </option>
           </select>
 
           <select
@@ -180,12 +447,15 @@ export default function PaymentManagement() {
             onChange={event =>
               setMethodFilter(event.target.value)
             }
-            aria-label="Filter by payment method"
+            aria-label="Filter payment method"
           >
-            <option value="All">All Methods</option>
-            <option value="KHQR">KHQR</option>
-            <option value="Cash">Cash</option>
-            <option value="None">Not Paid</option>
+            <option value="All">
+              All Methods
+            </option>
+
+            <option value="Not Recorded">
+              Not Recorded
+            </option>
           </select>
 
           <button
@@ -199,6 +469,7 @@ export default function PaymentManagement() {
           </button>
         </div>
 
+        {/* TABLE */}
         <div className="table-scroll">
           <table className="a-payments-table">
             <thead>
@@ -214,90 +485,119 @@ export default function PaymentManagement() {
             </thead>
 
             <tbody>
-              {filteredPayments.map(payment => (
-                <tr key={payment.orderId}>
-                  <td>
-                    <div className="a-payment-order-cell">
-                      <strong>{payment.orderId}</strong>
-                      <small>
-                        {payment.items.reduce(
-                          (sum, item) => sum + item.quantity,
-                          0
-                        )} items
-                      </small>
-                    </div>
-                  </td>
+              {!loading &&
+                !error &&
+                filteredOrders.map(order => (
+                  <tr key={order.order_id}>
 
-                  <td>{payment.table}</td>
+                    {/* ORDER */}
+                    <td>
+                      <div className="a-payment-order-cell">
+                        <strong>
+                          {order.order_number ||
+                            `#${order.order_id}`}
+                        </strong>
 
-                  <td className="a-payment-date">
-                    {payment.date}
-                  </td>
+                        <small>
+                          ID: {order.order_id}
+                        </small>
+                      </div>
+                    </td>
 
-                  <td>
-                    <strong className="a-payment-amount">
-                      {money(getTotal(payment))}
-                    </strong>
-                  </td>
+                    {/* TABLE */}
+                    <td>
+                      {order.table_id != null
+                        ? `Table ID ${order.table_id}`
+                        : '—'}
+                    </td>
 
-                  <td>
-                    {payment.method ? (
+                    {/* DATE */}
+                    <td className="a-payment-date">
+                      {formatDate(order.ordered_at)}
+                    </td>
+
+                    {/* AMOUNT */}
+                    <td>
+                      <strong className="a-payment-amount">
+                        {money(order.total_amount)}
+                      </strong>
+                    </td>
+
+                    {/* METHOD */}
+                    <td>
+                      <span className="a-method-none">
+                        Not recorded
+                      </span>
+                    </td>
+
+                    {/* PAYMENT STATUS */}
+                    <td>
                       <span
-                        className={`a-payment-method a-method-${payment.method.toLowerCase()}`}
+                        className="a-payment-status a-payment-unpaid"
+                        style={{
+                          background: '#f1f5f9',
+                          color: '#475569',
+                        }}
                       >
                         <Icon
-                          name={payment.method === 'Cash'
-                            ? 'bag'
-                            : 'grid'}
+                          name="clock"
                           size={15}
                         />
-                        {payment.method}
+                        Not Tracked
                       </span>
-                    ) : (
-                      <span className="a-method-none">—</span>
-                    )}
-                  </td>
+                    </td>
 
-                  <td>
-                    <span
-                      className={`a-payment-status a-payment-${payment.status.toLowerCase()}`}
-                    >
-                      <Icon
-                        name={payment.status === 'Paid'
-                          ? 'checkCircle'
-                          : 'clock'}
-                        size={15}
-                      />
-                      {payment.status}
-                    </span>
-                  </td>
+                    {/* DETAILS */}
+                    <td>
+                      <button
+                        type="button"
+                        className="a-payment-details-button"
+                        onClick={() =>
+                          setSelectedPayment(order)
+                        }
+                      >
+                        View Details
 
-                  <td>
-                    <button
-                      type="button"
-                      className="a-payment-details-button"
-                      onClick={() => setSelectedPayment(payment)}
-                    >
-                      {payment.status === 'Paid'
-                        ? 'View Receipt'
-                        : 'View Details'}
-                      <Icon name="chevronRight" size={15} />
-                    </button>
+                        <Icon
+                          name="chevronRight"
+                          size={15}
+                        />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+              {loading && (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="admin-empty"
+                  >
+                    Loading real orders...
                   </td>
                 </tr>
-              ))}
+              )}
 
-              {filteredPayments.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="admin-empty">
-                    <p>No payments match your filters.</p>
-                    <button
-                      type="button"
-                      className="btn btn-outline btn-small"
-                      onClick={resetFilters}
+              {!loading &&
+                !error &&
+                filteredOrders.length === 0 && (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="admin-empty"
                     >
-                      Clear Filters
-                    </button>
+                      No matching orders found.
+                    </td>
+                  </tr>
+                )}
+
+              {!loading && error && (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="admin-empty"
+                  >
+                    Could not load order records.
                   </td>
                 </tr>
               )}
@@ -305,19 +605,28 @@ export default function PaymentManagement() {
           </table>
         </div>
 
+        {/* FOOTER */}
         <footer className="a-payments-table-footer">
           <span>
-            Showing {filteredPayments.length} of{' '}
-            {samplePayments.length} records
+            Showing {filteredOrders.length} of{' '}
+            {totalOrders} orders
           </span>
-          <span>Sample data · Oct 24, 2026</span>
+
+          <span>
+            {totalOrders > PAGE_SIZE
+              ? `Showing latest ${PAGE_SIZE} only`
+              : 'Real order data · Payment tracking pending'}
+          </span>
         </footer>
       </section>
 
+      {/* DETAILS POPUP */}
       {selectedPayment && (
-        <PaymentDetails
-          payment={selectedPayment}
-          onClose={() => setSelectedPayment(null)}
+        <PaymentOrderDetails
+          order={selectedPayment}
+          onClose={() =>
+            setSelectedPayment(null)
+          }
         />
       )}
     </section>
