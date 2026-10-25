@@ -1,63 +1,15 @@
 
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+
 import Icon from '../../components/common/Icon';
-import { useAdminMenu } from '../../context/AdminMenuContext';
-
-// Sample data until the backend is connected.
-const weeklyRevenue = [
-  { day: 'Mon', amount: 165 },
-  { day: 'Tue', amount: 218 },
-  { day: 'Wed', amount: 184 },
-  { day: 'Thu', amount: 286 },
-  { day: 'Fri', amount: 258 },
-  { day: 'Sat', amount: 345 },
-  { day: 'Sun', amount: 310 }
-];
-
-const recentOrders = [
-  {
-    id: '#1058',
-    table: 'Table 04',
-    items: 3,
-    amount: 21.00,
-    status: 'Received'
-  },
-  {
-    id: '#1057',
-    table: 'Takeaway',
-    items: 2,
-    amount: 9.25,
-    status: 'Received'
-  },
-  {
-    id: '#1050',
-    table: 'Table 07',
-    items: 3,
-    amount: 13.25,
-    status: 'Preparing'
-  },
-  {
-    id: '#1048',
-    table: 'Table 12',
-    items: 4,
-    amount: 16.50,
-    status: 'Ready'
-  },
-  {
-    id: '#1047',
-    table: 'Table 03',
-    items: 2,
-    amount: 8.75,
-    status: 'Completed'
-  }
-];
-
-const topSellingNames = [
-  'Iced Latte',
-  'Cappuccino',
-  'Chicken Sandwich',
-  'Fried Rice'
-];
+import { fetchMenuSummary } from '../../services/adminMenuSummaryService';
+import {
+  fetchDashboardStats,
+  fetchDashboardAnalytics,
+  fetchPopularDishes,
+  fetchRecentOrders,
+} from '../../services/adminDashboardService';
 
 const money = value => `$${value.toFixed(2)}`;
 
@@ -77,47 +29,236 @@ function MetricCard({ title, value, hint, icon, tone }) {
   );
 }
 
-function RevenueChart() {
-  const maximum = Math.max(...weeklyRevenue.map(d => d.amount));
+
+function OrdersChart({ data = [] }) {
+  const maximum = Math.max(
+    1,
+    ...data.map(day => day.orders)
+  );
 
   return (
     <div className="a-chart">
-      {weeklyRevenue.map(entry => (
-        <div className="a-chart-column" key={entry.day}>
+      {data.map((entry, index) => {
+        const day = new Date(
+          `${entry.date}T12:00:00`
+        ).toLocaleDateString('en-US', {
+          weekday: 'short'
+        });
+
+        const height = (entry.orders / maximum) * 100;
+
+        return (
           <div
-            className="a-chart-bar-area"
-            title={`${entry.day}: ${money(entry.amount)}`}
+            className="a-chart-column"
+            key={entry.date}
           >
             <div
-              className={`a-chart-bar ${
-                entry.day === 'Sat' ? 'a-chart-highlight' : ''
-              }`}
-              style={{
-                height: `${(entry.amount / maximum) * 100}%`
-              }}
-            />
+              className="a-chart-bar-area"
+              title={`${entry.date}: ${entry.orders} orders`}
+            >
+              <div
+                className={`a-chart-bar ${
+                  index === data.length - 1
+                    ? 'a-chart-highlight'
+                    : ''
+                }`}
+                style={{
+                  height: `${height}%`
+                }}
+              />
+            </div>
+
+            <span>{day}</span>
           </div>
-          <span>{entry.day}</span>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
 
+
 export default function AdminDashboard() {
-  const { items, categories } = useAdminMenu();
 
-  const availableItems = items.filter(item => item.availability);
-  const unavailableItems = items.length - availableItems.length;
+  // Real statistics from the backend.
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const popularItems = topSellingNames
-    .map((name, index) => ({
-      item: items.find(
-        entry => entry.name.toLowerCase() === name.toLowerCase()
-      ),
-      count: [32, 25, 21, 18][index]
-    }))
-    .filter(entry => entry.item);
+  const [analytics, setAnalytics] = useState(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsError, setAnalyticsError] = useState('');
+
+  const [popularDishes, setPopularDishes] = useState([]);
+  const [popularLoading, setPopularLoading] = useState(true);
+  const [popularError, setPopularError] = useState('');
+
+  const [recentOrders, setRecentOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+  const [ordersError, setOrdersError] = useState('');
+
+  const [menuSummary, setMenuSummary] = useState(null);
+  const [menuLoading, setMenuLoading] = useState(true);
+  const [menuError, setMenuError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadStats() {
+      try {
+        const data = await fetchDashboardStats();
+
+        if (!cancelled) {
+          setStats(data);
+          setError('');
+        }
+      } catch (err) {
+        console.error('Dashboard stats error:', err);
+
+        if (!cancelled) {
+          setError('Unable to load dashboard statistics.');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    loadStats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadAnalytics() {
+      try {
+        const data = await fetchDashboardAnalytics();
+
+        if (!cancelled) {
+          setAnalytics(data);
+          setAnalyticsError('');
+        }
+      } catch (err) {
+        console.error('Dashboard analytics error:', err);
+
+        if (!cancelled) {
+          setAnalyticsError('Unable to load order analytics.');
+        }
+      } finally {
+        if (!cancelled) {
+          setAnalyticsLoading(false);
+        }
+      }
+    }
+
+    loadAnalytics();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadPopularDishes() {
+      try {
+        const data = await fetchPopularDishes();
+
+        if (!cancelled) {
+          setPopularDishes(data);
+          setPopularError('');
+        }
+      } catch (err) {
+        console.error('Popular dishes error:', err);
+
+        if (!cancelled) {
+          setPopularError('Unable to load popular dishes.');
+        }
+      } finally {
+        if (!cancelled) {
+          setPopularLoading(false);
+        }
+      }
+    }
+
+    loadPopularDishes();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadRecentOrders() {
+      try {
+        const data = await fetchRecentOrders();
+
+        if (!cancelled) {
+          setRecentOrders(
+            Array.isArray(data) ? data.slice(0, 5) : []
+          );
+          setOrdersError('');
+        }
+      } catch (err) {
+        console.error('Recent orders error:', err);
+
+        if (!cancelled) {
+          setOrdersError('Unable to load recent orders.');
+        }
+      } finally {
+        if (!cancelled) {
+          setOrdersLoading(false);
+        }
+      }
+    }
+
+    loadRecentOrders();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadMenuSummary() {
+      try {
+        const data = await fetchMenuSummary();
+
+        if (!cancelled) {
+          setMenuSummary(data);
+          setMenuError('');
+        }
+      } catch (err) {
+        console.error('Menu summary error:', err);
+
+        if (!cancelled) {
+          setMenuError('Unable to load menu summary.');
+        }
+      } finally {
+        if (!cancelled) {
+          setMenuLoading(false);
+        }
+      }
+    }
+
+    loadMenuSummary();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <section className="a-dashboard">
@@ -132,82 +273,118 @@ export default function AdminDashboard() {
         </div>
 
         <span className="a-dashboard-demo">
-          <Icon name="clock" size={16} />
-          Demo analytics
+            <Icon name="clock" size={16} />
+            Live order statistics · Other sections in preview
         </span>
       </header>
 
+      {error && (
+        <p role="alert" className="muted">
+          {error}
+        </p>
+      )}
+      
       {/* Main statistics */}
       <div className="a-metrics">
         <MetricCard
-          title="Sample Revenue"
-          value="$245.50"
-          hint="Illustrative daily revenue"
+          title="Today's Order Value"
+          value={
+            loading
+              ? '...'
+              : stats
+                ? money(Number(stats.today_order_value ?? 0))
+                : '—'
+          }
+          hint="Non-cancelled orders today"
           icon="file"
           tone="green"
         />
+
         <MetricCard
-          title="Sample Orders"
-          value="42"
-          hint="Illustrative daily orders"
+          title="Today's Orders"
+          value={loading ? '...' : stats?.orders_today ?? '—'}
+          hint={
+            stats
+              ? `${stats.total_orders} total orders`
+              : 'Orders placed today'
+          }
           icon="bag"
           tone="amber"
         />
+
         <MetricCard
-          title="Sample Active Tables"
-          value="8"
-          hint="Illustrative occupancy"
+          title="Preparing Orders"
+          value={
+            loading
+              ? '...'
+              : stats?.preparing_orders_today ?? '—'
+          }
+          hint="Orders placed today still preparing"
           icon="grid"
           tone="blue"
         />
+
         <MetricCard
           title="Menu Items"
-          value={items.length}
-          hint={`${availableItems.length} available · ${unavailableItems} sold out`}
+          value={menuLoading ? '...' : menuSummary?.totalItems ?? '—'}
+          hint={
+            menuSummary
+              ? `${menuSummary.availableItems} available · ${menuSummary.soldOutItems} sold out`
+              : 'Menu inventory'
+          }
           icon="utensils"
           tone="purple"
         />
       </div>
+
 
       {/* Revenue chart and menu summary */}
       <div className="a-dashboard-main-grid">
         <section className="card a-dashboard-panel">
           <div className="a-dashboard-panel-header">
             <div>
-              <h2>Revenue Overview</h2>
-              <p>Example revenue throughout the week</p>
+              <h2>Orders Overview</h2>
+              <p>Orders placed during the last 7 days</p>
             </div>
 
-            <span className="a-panel-tag">Sample · 7 days</span>
+            <span className="a-panel-tag">Last 7 days</span>
           </div>
 
           <div className="a-chart-summary">
             <div>
-              <span className="muted">Sample weekly revenue</span>
+              <span className="muted">Orders this week</span>
               <strong>
-                {money(
-                  weeklyRevenue.reduce(
-                    (sum, day) => sum + day.amount,
-                    0
-                  )
-                )}
+                {analyticsLoading
+                  ? '...'
+                  : analytics
+                    ? analytics.total_orders
+                    : '—'}
               </strong>
             </div>
 
             <span className="a-chart-legend">
               <span />
-              Revenue
+              Orders
             </span>
           </div>
 
-          <RevenueChart />
+          {analyticsLoading ? (
+            <p className="muted">Loading order trends...</p>
+          ) : analyticsError ? (
+            <p role="alert" className="muted">
+              {analyticsError}
+            </p>
+          ) : (
+            <OrdersChart data={analytics?.order_trend ?? []} />
+          )}
         </section>
+
 
         <section className="card a-dashboard-panel">
           <div className="a-dashboard-panel-header">
             <div>
               <h2>Menu Summary</h2>
-              <p>Information from your Admin menu</p>
+              <p>Current menu availability and categories</p>
             </div>
 
             <span className="a-panel-icon">
@@ -215,13 +392,16 @@ export default function AdminDashboard() {
             </span>
           </div>
 
+          
           <div className="a-menu-summary">
             <div>
               <span className="a-summary-icon a-summary-green">
                 <Icon name="checkCircle" size={22} />
               </span>
               <span>Available items</span>
-              <strong>{availableItems.length}</strong>
+              <strong>
+                {menuLoading ? '...' : menuSummary?.availableItems ?? '—'}
+              </strong>
             </div>
 
             <div>
@@ -229,7 +409,9 @@ export default function AdminDashboard() {
                 <Icon name="alert" size={22} />
               </span>
               <span>Sold out items</span>
-              <strong>{unavailableItems}</strong>
+              <strong>
+                {menuLoading ? '...' : menuSummary?.soldOutItems ?? '—'}
+              </strong>
             </div>
 
             <div>
@@ -237,10 +419,18 @@ export default function AdminDashboard() {
                 <Icon name="menu" size={22} />
               </span>
               <span>Categories</span>
-              <strong>{categories.length}</strong>
+              <strong>
+                {menuLoading ? '...' : menuSummary?.totalCategories ?? '—'}
+              </strong>
             </div>
           </div>
 
+          {menuError && (
+            <p role="alert" className="muted">
+              {menuError}
+            </p>
+          )}
+          
           <Link to="/admin/menu" className="a-panel-link">
             Manage Menu
             <Icon name="chevronRight" size={17} />
@@ -254,7 +444,7 @@ export default function AdminDashboard() {
           <div className="a-dashboard-panel-header">
             <div>
               <h2>Recent Orders</h2>
-              <p>Sample orders for interface preview</p>
+              <p>Latest customer orders</p>
             </div>
 
             <Link to="/admin/orders" className="a-text-link">
@@ -275,23 +465,60 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
 
+              
               <tbody>
-                {recentOrders.map(order => (
-                  <tr key={order.id}>
-                    <td><strong>{order.id}</strong></td>
-                    <td>{order.table}</td>
-                    <td>{order.items}</td>
-                    <td>{money(order.amount)}</td>
-                    <td>
-                      <span
-                        className={`a-order-status a-order-${order.status.toLowerCase()}`}
-                      >
-                        {order.status}
-                      </span>
-                    </td>
+                {ordersLoading ? (
+                  <tr>
+                    <td colSpan={5}>Loading recent orders...</td>
                   </tr>
-                ))}
+                ) : ordersError ? (
+                  <tr>
+                    <td colSpan={5} role="alert">{ordersError}</td>
+                  </tr>
+                ) : recentOrders.length === 0 ? (
+                  <tr>
+                    <td colSpan={5}>No orders found.</td>
+                  </tr>
+                ) : (
+                  recentOrders.map(order => {
+                    const status = order.status || 'UNKNOWN';
+
+                    const statusLabel = status
+                      .toLowerCase()
+                      .replace(/_/g, ' ')
+                      .replace(/\b\w/g, char => char.toUpperCase());
+
+                    return (
+                      <tr key={order.order_id}>
+                        <td>
+                          <strong>{order.order_number}</strong>
+                        </td>
+
+                        <td>
+                          {order.table_id != null
+                            ? `Table ID ${order.table_id}`
+                            : '—'}
+                        </td>
+
+                        <td>—</td>
+
+                        <td>
+                          {money(Number(order.total_amount ?? 0))}
+                        </td>
+
+                        <td>
+                          <span
+                            className={`a-order-status a-order-${status.toLowerCase()}`}
+                          >
+                            {statusLabel}
+                          </span>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
+
             </table>
           </div>
         </section>
@@ -300,43 +527,52 @@ export default function AdminDashboard() {
           <div className="a-dashboard-panel-header">
             <div>
               <h2>Popular Menu Items</h2>
-              <p>Illustrative sales ranking</p>
+              <p>Most ordered dishes in the last 7 days</p>
             </div>
           </div>
 
+          
           <div className="a-popular-list">
-            {popularItems.length === 0 ? (
+            {popularLoading ? (
+              <p className="muted">Loading popular dishes...</p>
+            ) : popularError ? (
+              <p role="alert" className="muted">
+                {popularError}
+              </p>
+            ) : popularDishes.length === 0 ? (
               <p className="muted">
-                No matching sample products available.
+                No popular dishes recorded in the last 7 days.
               </p>
             ) : (
-              popularItems.map(({ item, count }, index) => (
-                <div className="a-popular-item" key={item.id}>
+              popularDishes.map((dish, index) => (
+                <div
+                  className="a-popular-item"
+                  key={dish.item_id}
+                >
                   <span className="a-popular-rank">
                     {index + 1}
                   </span>
 
                   <div className="a-popular-image">
-                    {item.image ? (
-                      <img src={item.image} alt="" />
-                    ) : (
-                      <Icon name="utensils" size={19} />
-                    )}
+                    <Icon name="utensils" size={19} />
                   </div>
 
                   <div className="a-popular-info">
-                    <strong>{item.name}</strong>
-                    <span>{item.category}</span>
+                    <strong>{dish.name}</strong>
+                    <span>
+                      {dish.order_count} orders
+                    </span>
                   </div>
 
                   <div className="a-popular-sales">
-                    <strong>{count}</strong>
-                    <span>sample sales</span>
+                    <strong>{dish.quantity_sold}</strong>
+                    <span>items ordered</span>
                   </div>
                 </div>
               ))
             )}
           </div>
+
 
           <Link to="/admin/reports" className="a-panel-link">
             View Sales Reports
