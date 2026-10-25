@@ -21,6 +21,7 @@ import AdminSettings from '../pages/admin/AdminSettings';
 import { AdminMenuProvider } from '../context/AdminMenuContext';
 import Placeholder from '../components/common/Placeholder';
 import Login from '../pages/auth/Login';
+import ProtectedRoute from '../components/auth/ProtectedRoute';
 
 function Home() {
   const { search } = useLocation();
@@ -51,12 +52,15 @@ export default function AppRoutes() {
       <Route path="/customer/checkout" element={<Checkout/>}/>
       <Route path="/customer/orders" element={<Placeholder title="Order Tracking"/>}/>
     </Route>
+    <Route element={<ProtectedRoute allowedRole="KITCHEN_STAFF" />}>
     <Route element={<KitchenLayout/>}>
       <Route path="/kitchen" element={<KitchenDashboard/>}/>
       <Route path="/kitchen/history" element={<OrderHistory/>}/>
       <Route path="/kitchen/history/:orderId" element={<KitchenOrderDetails/>}/>
       <Route path="/kitchen/settings" element={<KitchenSettings/>}/>
     </Route>
+    </Route>
+    <Route element={<ProtectedRoute allowedRole="ADMIN" />}>
     <Route element={<AdminMenuProvider>
       <AdminLayout />
     </AdminMenuProvider>}>
@@ -68,6 +72,7 @@ export default function AppRoutes() {
       <Route path="/admin/payments" element={<PaymentManagement />}/>
       <Route path="/admin/reports" element={<Reports />}/>
       <Route path="/admin/settings" element={<AdminSettings/>}/>
+    </Route>
     </Route>
     <Route path="/login" element={<Login/>}/>
     <Route path="/menu" element={<CustomerRedirect to="/customer/menu"/>}/>
