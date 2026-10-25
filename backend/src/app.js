@@ -1,9 +1,10 @@
-
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
 
 import authRoutes from "./routes/auth.js";
+import kitchenRoutes from "./routes/kitchen.js";
+
 
 const app = express();
 
@@ -26,6 +27,8 @@ app.get("/health", (req, res) => {
 
 // Authentication routes
 app.use("/auth", authRoutes);
+
+app.use("/kitchen", kitchenRoutes);
 
 // Handle unknown routes
 app.use((req, res) => {
