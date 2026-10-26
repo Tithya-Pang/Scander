@@ -7,6 +7,110 @@ const ACTIVE_STATUSES = ["RECEIVED", "PREPARING", "READY"];
 const HISTORY_STATUSES = ["SERVED", "CANCELLED"];
 
 
+// Shared: attach dishes, table numbers and menu images
+
+const ITEM_FIELDS =
+  "order_item_id, order_id, item_id, item_name, quantity, unit_price, subtotal, special_instruction, status, preparing_at, ready_at, served_at";
+
+// Look up display table numbers for the given table IDs
+const getTableNumbers = async (restaurantId, tableIds) => {
+  const ids = [...new Set(tableIds)];
+
+  if (ids.length === 0) {
+    return new Map();
+  }
+
+  const { data, error } = await adminSupabase
+    .from("restaurant_table")
+    .select("table_id, table_number")
+    .eq("restaurant_id", restaurantId)
+    .in("table_id", ids);
+
+  if (error) {
+    throw new Error(`Failed to fetch tables: ${error.message}`);
+  }
+
+  return new Map(
+    (data ?? []).map((table) => [table.table_id, table.table_number])
+  );
+};
+
+// Look up menu images for the given menu item IDs
+const getItemImages = async (restaurantId, itemIds) => {
+  const ids = [...new Set(itemIds)];
+
+  if (ids.length === 0) {
+    return new Map();
+  }
+
+  const { data, error } = await adminSupabase
+    .from("menu_item")
+    .select("item_id, image_url")
+    .eq("restaurant_id", restaurantId)
+    .in("item_id", ids);
+
+  if (error) {
+    throw new Error(`Failed to fetch menu images: ${error.message}`);
+  }
+
+  return new Map(
+    (data ?? []).map((item) => [item.item_id, item.image_url])
+  );
+};
+
+const attachOrderDetails = async (restaurantId, orders) => {
+  if (!orders || orders.length === 0) {
+    return [];
+  }
+
+  // Step 1: Retrieve items belonging to these orders
+  const orderIds = orders.map((order) => order.order_id);
+
+  const { data: items, error: itemsError } = await adminSupabase
+    .from("order_item")
+    .select(ITEM_FIELDS)
+    .eq("restaurant_id", restaurantId)
+    .in("order_id", orderIds)
+    .order("order_item_id", { ascending: true });
+
+  if (itemsError) {
+    throw new Error(
+      `Failed to fetch order items: ${itemsError.message}`
+    );
+  }
+
+  // Step 2: Resolve table numbers and dish images
+  const [tableNumbers, images] = await Promise.all([
+    getTableNumbers(
+      restaurantId,
+      orders.map((order) => order.table_id)
+    ),
+    getItemImages(
+      restaurantId,
+      (items ?? []).map((item) => item.item_id)
+    ),
+  ]);
+
+  // Step 3: Group items by order ID
+  const itemsByOrder = new Map();
+
+  for (const item of items ?? []) {
+    const orderItems = itemsByOrder.get(item.order_id) ?? [];
+    orderItems.push({
+      ...item,
+      image_url: images.get(item.item_id) ?? null,
+    });
+    itemsByOrder.set(item.order_id, orderItems);
+  }
+
+  // Step 4: Attach details to each order
+  return orders.map((order) => ({
+    ...order,
+    table_number: tableNumbers.get(order.table_id) ?? null,
+    items: itemsByOrder.get(order.order_id) ?? [],
+  }));
+};
+
 // 1. Get Active Kitchen Orders
 
 export const getActiveOrders = async (restaurantId) => {
@@ -14,7 +118,6 @@ export const getActiveOrders = async (restaurantId) => {
     throw new Error("Invalid restaurant ID");
   }
 
-  // Step 1: Retrieve active orders
   const { data: orders, error: ordersError } = await adminSupabase
     .from("customer_order")
     .select(
@@ -30,42 +133,7 @@ export const getActiveOrders = async (restaurantId) => {
     );
   }
 
-  if (!orders || orders.length === 0) {
-    return [];
-  }
-
-  // Step 2: Retrieve items belonging to these orders
-  const orderIds = orders.map((order) => order.order_id);
-
-  const { data: items, error: itemsError } = await adminSupabase
-    .from("order_item")
-    .select(
-      "order_item_id, order_id, item_name, quantity, special_instruction, status"
-    )
-    .eq("restaurant_id", restaurantId)
-    .in("order_id", orderIds)
-    .order("order_item_id", { ascending: true });
-
-  if (itemsError) {
-    throw new Error(
-      `Failed to fetch order items: ${itemsError.message}`
-    );
-  }
-
-  // Step 3: Group items by order ID
-  const itemsByOrder = new Map();
-
-  for (const item of items ?? []) {
-    const orderItems = itemsByOrder.get(item.order_id) ?? [];
-    orderItems.push(item);
-    itemsByOrder.set(item.order_id, orderItems);
-  }
-
-  // Step 4: Attach items to each order
-  return orders.map((order) => ({
-    ...order,
-    items: itemsByOrder.get(order.order_id) ?? [],
-  }));
+  return attachOrderDetails(restaurantId, orders);
 };
 
 // 2. Get Kitchen Order By ID
@@ -90,26 +158,11 @@ export const getOrderById = async (restaurantId, orderId) => {
     return null;
   }
 
-  // Retrieve order items
-  const { data: items, error: itemsError } = await adminSupabase
-    .from("order_item")
-    .select(
-      "order_item_id, item_id, item_name, quantity, unit_price, subtotal, special_instruction, status, preparing_at, ready_at, served_at"
-    )
-    .eq("restaurant_id", restaurantId)
-    .eq("order_id", orderId)
-    .order("order_item_id", { ascending: true });
+  const [detailedOrder] = await attachOrderDetails(restaurantId, [
+    order,
+  ]);
 
-  if (itemsError) {
-    throw new Error(
-      `Failed to fetch order items: ${itemsError.message}`
-    );
-  }
-
-  return {
-    ...order,
-    items: items ?? [],
-  };
+  return detailedOrder;
 };
 
 
@@ -203,7 +256,7 @@ export const getOrderHistory = async (
   }
 
   return {
-    orders: data ?? [],
+    orders: await attachOrderDetails(restaurantId, data ?? []),
     pagination: {
       page,
       limit,

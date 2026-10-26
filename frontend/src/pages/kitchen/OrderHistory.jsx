@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Icon from '../../components/common/Icon';
 import { KitchenStat, StatusPill, TableTag } from '../../components/kitchen/KitchenTags';
@@ -21,13 +22,14 @@ function inDateRange(time, range, now) {
 function matchesSearch(order, query) {
   if (!query) return true;
   const text = query.toLowerCase().replace(/^#/, '');
-  return String(order.id).includes(text) || `table ${order.table}` === text || String(order.table) === text
+  const table = String(order.table).toLowerCase();
+  return String(order.number).toLowerCase().includes(text) || String(order.id).includes(text) || `table ${table}` === text || table === text
     || order.items.some(item => item.name.toLowerCase().includes(text));
 }
 
 function exportCsv(rows) {
   const header = ['Order ID', 'Date', 'Table', 'Type', 'Items', 'Notes', 'Order Time', 'Completed', 'Prep (min)', 'Dishes', 'Total'];
-  const lines = rows.map(order => [`#${order.id}`, formatDate(order.completedAt), order.table, order.type, itemSummary(order),
+  const lines = rows.map(order => [`#${order.number}`, formatDate(order.completedAt), order.table, order.type, itemSummary(order),
     order.items.filter(item => item.note).map(item => `${item.name}: ${item.note}`).join('; '), formatClock(order.receivedAt),
     formatClock(order.completedAt), prepMinutes(order), dishCount(order), orderTotals(order).total.toFixed(2)]);
   const csv = [header, ...lines].map(row => row.map(cell => `"${String(cell).replaceAll('"', '""')}"`).join(',')).join('\r\n');
@@ -45,8 +47,9 @@ function FilterSelect({ icon, label, value, options, onChange }) {
 }
 
 export default function OrderHistory() {
-  const { orders, now } = useKitchen();
+  const { history, historyStatus, historyError, historyTruncated, refreshHistory, now } = useKitchen();
   const [params, setParams] = useSearchParams();
+  useEffect(() => { refreshHistory(); }, [refreshHistory]);
   const filters = { ...defaults, ...Object.fromEntries(params) };
   const setFilter = (key, value) => setParams(current => {
     const next = new URLSearchParams(current);
@@ -55,8 +58,8 @@ export default function OrderHistory() {
     return next;
   }, { replace: true });
 
-  const completed = orders.filter(order => order.completedAt).sort((a, b) => b.completedAt - a.completedAt);
-  const tables = [...new Set(completed.map(order => order.table))].sort((a, b) => a - b);
+  const completed = [...history].sort((a, b) => b.completedAt - a.completedAt);
+  const tables = [...new Set(completed.map(order => String(order.table)))].sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   const rows = completed.filter(order => matchesSearch(order, filters.q.trim())
     && inDateRange(order.completedAt, filters.date, now)
     && (filters.table === 'all' || String(order.table) === filters.table)
@@ -99,7 +102,7 @@ export default function OrderHistory() {
           const query = filters.q.trim().toLowerCase();
           const items = query ? [...order.items].sort((a, b) => b.name.toLowerCase().includes(query) - a.name.toLowerCase().includes(query)) : order.items;
           return <tr key={order.id}>
-            <td><strong className="k-order-id">#{order.id}</strong></td>
+            <td><strong className="k-order-id">#{order.number}</strong></td>
             <td><TableTag table={order.table}/></td>
             <td className="k-summary-cell">
               <span className="k-summary">{items.slice(0, 2).map(item => `${item.name} ×${item.qty}`).join(', ')}{order.items.length > 2 && <span className="k-more">+{order.items.length - 2} more</span>}</span>
@@ -113,9 +116,11 @@ export default function OrderHistory() {
           </tr>;
         })}</tbody>
       </table></div>
-      {!rows.length && <div className="k-empty"><h2>No completed orders match</h2><p>Try a different search, date range, or table.</p><button type="button" className="k-btn k-btn-outline" onClick={() => setParams({}, { replace: true })}>Reset filters</button></div>}
+      {historyStatus === 'loading' && !history.length && <div className="k-empty" role="status"><h2>Loading order history…</h2></div>}
+      {historyStatus === 'error' && <div className="k-empty" role="alert"><h2>Could not load order history</h2><p>{historyError}</p><button type="button" className="k-btn k-btn-primary" onClick={refreshHistory}>Try again</button></div>}
+      {historyStatus !== 'error' && (historyStatus !== 'loading' || history.length > 0) && !rows.length && <div className="k-empty"><h2>No completed orders match</h2><p>Try a different search, date range, or table.</p><button type="button" className="k-btn k-btn-outline" onClick={() => setParams({}, { replace: true })}>Reset filters</button></div>}
       {rows.length > 0 && <footer className="k-pagination">
-        <span>Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, rows.length)} of {rows.length} completed orders</span>
+        <span>Showing {(page - 1) * PAGE_SIZE + 1} to {Math.min(page * PAGE_SIZE, rows.length)} of {rows.length} completed orders{historyTruncated && ' (most recent finished orders only)'}</span>
         <nav aria-label="Pagination">
           <button type="button" className="k-page-button" aria-label="Previous page" disabled={page === 1} onClick={() => setFilter('page', String(page - 1))}><Icon name="chevronLeft" size={16}/></button>
           {Array.from({ length: pageCount }, (_, index) => index + 1).map(number => <button type="button" key={number} className={`k-page-button${number === page ? ' active' : ''}`} aria-current={number === page ? 'page' : undefined} onClick={() => setFilter('page', String(number))}>{number}</button>)}

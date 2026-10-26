@@ -29,7 +29,9 @@ function Progress({ done, total, label, detail }) {
 }
 
 export default function OrderCard({ order, stage }) {
-  const { now, settings, acceptOrder, setDishStatus, serveAllReady } = useKitchen();
+  const { now, settings, busy, acceptOrder, setDishStatus, serveAllReady } = useKitchen();
+  // Buttons stay disabled until the backend confirms the previous change.
+  const pending = Boolean(busy[order.id]);
   const [partialPickup, setPartialPickup] = useState(false);
   const elapsed = minutesBetween(order.receivedAt, now);
   const rush = settings.rushAlerts && elapsed >= RUSH_THRESHOLD_MINUTES;
@@ -38,14 +40,14 @@ export default function OrderCard({ order, stage }) {
   const remaining = total - counts.served;
 
   function dishAction(item) {
-    if (item.status === 'preparing') return <button type="button" className="k-btn k-btn-outline k-btn-sm" aria-label={`Mark ${item.name} ready`} onClick={() => setDishStatus(order.id, item.lineId, 'ready')}>Mark Ready</button>;
-    if (item.status === 'ready') return <button type="button" className="k-btn k-btn-primary k-btn-sm" aria-label={`Mark ${item.name} served`} onClick={() => setDishStatus(order.id, item.lineId, 'served')}>Mark Served</button>;
+    if (item.status === 'preparing') return <button type="button" className="k-btn k-btn-outline k-btn-sm" aria-label={`Mark ${item.name} ready`} disabled={pending} onClick={() => setDishStatus(order.id, item.lineId, 'ready')}>Mark Ready</button>;
+    if (item.status === 'ready') return <button type="button" className="k-btn k-btn-primary k-btn-sm" aria-label={`Mark ${item.name} served`} disabled={pending} onClick={() => setDishStatus(order.id, item.lineId, 'served')}>Mark Served</button>;
     return <StatusPill status="served"/>;
   }
 
-  return <article className={`k-order${rush ? ' k-order-rush' : ''}`} aria-label={`Order ${order.id}`}>
+  return <article className={`k-order${rush ? ' k-order-rush' : ''}`} aria-label={`Order ${order.number}`} aria-busy={pending}>
     <header className="k-order-head">
-      <strong className="k-order-id">#{order.id}</strong>
+      <strong className="k-order-id">#{order.number}</strong>
       <TableTag table={order.table}/>
       <TypeTag type={order.type}/>
       <span className="k-elapsed" title={rush ? `Waiting longer than ${RUSH_THRESHOLD_MINUTES} minutes` : 'Time since order was placed'}>
@@ -56,7 +58,7 @@ export default function OrderCard({ order, stage }) {
     {stage === 'received' && <>
       <p className="k-order-sub">{dishCount(order)} {dishCount(order) === 1 ? 'dish' : 'dishes'}</p>
       <ul className="k-dishes">{order.items.map(item => <DishRow key={item.lineId} item={item}/>)}</ul>
-      <button type="button" className="k-btn k-btn-primary k-btn-block" onClick={() => acceptOrder(order.id)}><Icon name="play" size={16}/>Accept Preparation</button>
+      <button type="button" className="k-btn k-btn-primary k-btn-block" disabled={pending} onClick={() => acceptOrder(order.id)}><Icon name="play" size={16}/>Accept Preparation</button>
     </>}
 
     {stage === 'preparing' && <>
@@ -70,10 +72,10 @@ export default function OrderCard({ order, stage }) {
         detail={counts.served ? `${counts.served} already served` : ''}/>
       <ul className="k-dishes">{order.items.map(item => <DishRow key={item.lineId} item={item} showState={partialPickup}>
         {item.status === 'ready' && partialPickup
-          ? <button type="button" className="k-btn k-btn-outline k-btn-sm" aria-label={`Mark ${item.name} served`} onClick={() => setDishStatus(order.id, item.lineId, 'served')}>Mark Served</button>
+          ? <button type="button" className="k-btn k-btn-outline k-btn-sm" aria-label={`Mark ${item.name} served`} disabled={pending} onClick={() => setDishStatus(order.id, item.lineId, 'served')}>Mark Served</button>
           : <StatusPill status={item.status}/>}
       </DishRow>)}</ul>
-      <button type="button" className="k-btn k-btn-primary k-btn-block" onClick={() => serveAllReady(order.id)}><Icon name="check" size={18}/>Mark as Served (All)</button>
+      <button type="button" className="k-btn k-btn-primary k-btn-block" disabled={pending} onClick={() => serveAllReady(order.id)}><Icon name="check" size={18}/>Mark as Served (All)</button>
       {remaining > 1 && <button type="button" className="k-link-button" aria-pressed={partialPickup} onClick={() => setPartialPickup(value => !value)}>
         {partialPickup ? 'Done with partial pickup' : 'Partial pickup? Serve dishes individually'}
       </button>}
