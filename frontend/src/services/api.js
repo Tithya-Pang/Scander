@@ -1,5 +1,5 @@
 export const API_BASE_URL = (
-  import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
+  import.meta.env.VITE_API_BASE_URL || '/api'
 ).replace(/\/+$/, '');
 
 // Call from feature services when the Express API is available.
@@ -16,7 +16,9 @@ export async function apiRequest(path, { body, headers, ...options } = {}) {
   });
 
   if (!response.ok) {
-    const error = new Error(`API request failed (${response.status})`);
+    let message = `API request failed (${response.status})`;
+    try { const body = await response.json(); if (typeof body.message === 'string') message = body.message; } catch { /* Non-JSON gateway error. */ }
+    const error = new Error(message);
     error.status = response.status;
     throw error;
   }

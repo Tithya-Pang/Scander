@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 import Icon from '../../components/common/Icon';
@@ -26,6 +26,7 @@ const statusIcons = {
 
 function TableQRCodeDialog({ table, onClose, getTableUrl }) {
   const [copied, setCopied] = useState(false);
+  const qrRef = useRef(null);
   const url = getTableUrl(table);
 
   useEffect(() => {
@@ -40,6 +41,17 @@ function TableQRCodeDialog({ table, onClose, getTableUrl }) {
       handleEscape
     );
   }, [onClose]);
+
+  function downloadQr() {
+    if (!qrRef.current) return;
+    const svg = new XMLSerializer().serializeToString(qrRef.current);
+    const objectUrl = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = `gather-grounds-table-${table.id}.svg`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+  }
 
   async function copyUrl() {
     try {
@@ -89,6 +101,7 @@ function TableQRCodeDialog({ table, onClose, getTableUrl }) {
 
           <div className="a-qr-paper">
             <QRCodeSVG
+              ref={qrRef}
               value={url}
               size={210}
               level="M"
@@ -109,6 +122,9 @@ function TableQRCodeDialog({ table, onClose, getTableUrl }) {
         </div>
 
         <div className="a-qr-actions">
+          <button type="button" className="btn btn-outline" onClick={downloadQr}>
+            Download QR
+          </button>
           <button
             type="button"
             className="btn btn-outline"

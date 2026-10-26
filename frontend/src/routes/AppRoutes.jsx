@@ -3,6 +3,7 @@ import PageLayout from '../components/layout/PageLayout';
 import CustomerMenu from '../pages/customer/Menu';
 import Cart from '../pages/customer/Cart';
 import Checkout from '../pages/customer/Checkout';
+import OrderTracking from '../pages/customer/OrderTracking';
 import CustomerLayout from '../components/layout/CustomerLayout';
 import KitchenDashboard from '../pages/kitchen/KitchenDashboard';
 import OrderHistory from '../pages/kitchen/OrderHistory';
@@ -49,7 +50,7 @@ export default function AppRoutes() {
       <Route path="/customer/menu" element={<CustomerMenu/>}/>
       <Route path="/customer/cart" element={<Cart/>}/>
       <Route path="/customer/checkout" element={<Checkout/>}/>
-      <Route path="/customer/orders" element={<Placeholder title="Order Tracking"/>}/>
+      <Route path="/customer/orders" element={<OrderTracking/>}/>
     </Route>
     <Route element={<KitchenLayout/>}>
       <Route path="/kitchen" element={<KitchenDashboard/>}/>

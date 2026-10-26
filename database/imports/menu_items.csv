@@ -1,0 +1,21 @@
+restaurant_id,category_id,name,description,price,image_url,is_available,is_active
+1,11,Crispy Chicken Sandwich,Crispy chicken served in a sandwich,4.50,/images/menu/crispy-chicken-sandwich.png,true,true
+1,10,Grilled Steak Salmon With Fries,Grilled salmon steak served with fries,12.00,/images/menu/grilled-steak-salmon-with-fries.png,true,true
+1,10,Beef Stew With Baguette,Beef stew served with a baguette,6.50,/images/menu/beef-stew-with-baguette.png,true,true
+1,10,LokLak Pizza,Pizza with LokLak-inspired toppings,6.90,/images/menu/loklak-pizza.png,true,true
+1,7,Hot Cappuccino,Hot espresso with steamed milk and foam,2.95,/images/menu/hot-cappuccino.png,true,true
+1,10,Shrimp Paste Fried Rice,Fried rice seasoned with shrimp paste,4.50,/images/menu/shrimp-paste-fried-rice.png,true,true
+1,10,Crispy Prawns with Tamarind Glaze,Crispy prawns with tamarind glaze,4.25,/images/menu/crispy-prawns-tamarind-glaze.png,true,true
+1,10,Pork Belly With Kimchi,Pork belly served with kimchi,4.25,/images/menu/pork-belly-kimchi.png,true,true
+1,8,Iced Matcha Latte,Matcha latte served over ice,2.95,/images/menu/iced-matcha-latte.png,true,true
+1,8,Matcha Coconut Smoothie (M),Medium matcha and coconut smoothie,3.55,/images/menu/matcha-coconut-smoothie.png,true,true
+1,8,Hot Matcha Latte (M),Medium matcha latte served hot,2.95,/images/menu/hot-matcha-latte.png,true,true
+1,10,Classic Crispy Chicken Burger,"Crispy chicken burger in a sesame bun, served with slaw",4.80,/images/menu/classic-crispy-chicken-burger.png,true,true
+1,10,Creamy Salmon Pasta Alfredo,Salmon pasta with a creamy Alfredo sauce,7.25,/images/menu/creamy-salmon-pasta-alfredo.png,true,true
+1,10,Khmer Spiced Stir Fried Seafood with Rice,Khmer-spiced seafood served with rice,7.25,/images/menu/khmer-spiced-seafood-rice.png,true,true
+1,7,Iced Latte,"Espresso, milk and ice",3.50,/images/menu/iced-latte.jpg,true,true
+1,7,Cappuccino,"Espresso, steamed milk and a smooth layer of foam",3.75,/images/menu/cappuccino.jpg,true,true
+1,11,Chicken Sandwich,Grilled chicken and fresh vegetables,5.25,/images/menu/chicken-sandwich.jpg,true,true
+1,9,Avocado Toast,"Creamy avocado, toasted bread and a sunny-side-up egg",4.75,/images/menu/avocado-toast.jpg,true,true
+1,10,Fried Rice,House-style rice with vegetables,4.50,/images/menu/fried-rice.jpg,true,true
+1,12,Chocolate Cake,Rich chocolate cake with a silky chocolate frosting,4.25,/images/menu/chocolate-cake.jpg,true,true

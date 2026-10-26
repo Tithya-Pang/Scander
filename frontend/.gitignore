@@ -3,3 +3,6 @@ dist/
 .env
 .env.local
 .DS_Store
+
+# Generated QRs contain the current frontend address; regenerate when it changes.
+/public/table-qr-codes/
