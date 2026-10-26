@@ -92,7 +92,7 @@
 /* Toasts */
 .kitchen-shell .k-toasts{position:fixed;right:22px;bottom:22px;display:grid;gap:10px;z-index:20;max-width:min(380px,calc(100vw - 32px))}
 .kitchen-shell .k-toast{display:flex;align-items:center;gap:10px;padding:12px 12px 12px 16px;background:var(--k-surface);color:var(--k-ink);border:1px solid var(--k-line);border-left:4px solid var(--k-green);border-radius:14px;box-shadow:0 8px 24px #14203a1f;font-size:14px;font-weight:600}
-.kitchen-shell .k-toast svg{color:var(--k-green);flex-shrink:0}.kitchen-shell .k-toast span{flex:1}
+.kitchen-shell .k-toast svg{color:var(--k-green);flex-shrink:0}.kitchen-shell .k-toast span{flex:1}.k-toast-error{border-left-color:var(--k-amber)}.k-toast-error svg{color:var(--k-amber)}
 .kitchen-shell .k-toast button{border:0;background:transparent;color:var(--k-muted);font-size:20px;line-height:1;width:28px;height:28px;border-radius:8px}
 
 /* Order history: filters, table, pagination */
