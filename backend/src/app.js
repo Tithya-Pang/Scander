@@ -4,6 +4,8 @@ import cors from "cors";
 import "dotenv/config";
 
 import authRoutes from "./routes/auth.js";
+import menuRoutes from "./routes/menu.js";
+import orderRoutes from "./routes/order.js";
 
 const app = express();
 
@@ -26,6 +28,10 @@ app.get("/health", (req, res) => {
 
 // Authentication routes
 app.use("/auth", authRoutes);
+
+// Customer menu
+app.use("/api/menu", menuRoutes);
+app.use("/api/orders", orderRoutes);
 
 // Handle unknown routes
 app.use((req, res) => {
