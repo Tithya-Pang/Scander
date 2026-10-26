@@ -18,6 +18,8 @@ export async function apiRequest(path, { body, headers, ...options } = {}) {
   if (!response.ok) {
     const error = new Error(`API request failed (${response.status})`);
     error.status = response.status;
+    // Keep the backend's JSON body (e.g. { message }) for callers that want it.
+    error.body = await response.json().catch(() => null);
     throw error;
   }
 

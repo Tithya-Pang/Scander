@@ -10,15 +10,14 @@ const columns = [
 ];
 
 export default function KitchenDashboard() {
-  const { orders, now } = useKitchen();
+  const { orders, ordersStatus, ordersError, refreshOrders, history, now } = useKitchen();
   const byStage = { received: [], preparing: [], ready: [] };
-  const completedToday = [];
   const today = new Date(now).toDateString();
   orders.forEach(order => {
     const stage = getOrderStage(order);
     if (byStage[stage]) byStage[stage].push(order);
-    else if (new Date(order.completedAt).toDateString() === today) completedToday.push(order);
   });
+  const completedToday = history.filter(order => new Date(order.completedAt).toDateString() === today);
   Object.values(byStage).forEach(list => list.sort((a, b) => a.receivedAt - b.receivedAt));
   const active = [...byStage.received, ...byStage.preparing, ...byStage.ready];
   const waiting = active.filter(order => minutesBetween(order.receivedAt, now) >= RUSH_THRESHOLD_MINUTES).length;
@@ -27,7 +26,7 @@ export default function KitchenDashboard() {
   return <section className="k-page">
     <header className="k-page-head">
       <div>
-        <div className="k-title-row"><h1>Kitchen Queue</h1><span className="k-live" title="Orders are simulated in the browser until the backend is connected">Live · demo data</span></div>
+        <div className="k-title-row"><h1>Kitchen Queue</h1><span className="k-live" title="Orders refresh from the kitchen server every 20 seconds">{ordersStatus === 'ready' && ordersError ? 'Reconnecting…' : 'Live'}</span></div>
         <p>Track and update dishes in real time. Keep the good food flowing.</p>
       </div>
       <div className="k-stats">
@@ -36,6 +35,9 @@ export default function KitchenDashboard() {
         <KitchenStat icon="alert" value={waiting} label={`Waiting ≥ ${RUSH_THRESHOLD_MINUTES} min`} tone={waiting ? 'warn' : undefined}/>
       </div>
     </header>
-    <div className="k-board">{columns.map(column => <KanbanColumn key={column.stage} {...column} orders={byStage[column.stage]}/>)}</div>
+    {ordersStatus === 'error'
+      ? <div className="k-card k-empty" role="alert"><h2>Could not load kitchen orders</h2><p>{ordersError}</p><button type="button" className="k-btn k-btn-primary" onClick={refreshOrders}>Try again</button></div>
+      : <div className="k-board" aria-busy={ordersStatus === 'loading'}>{columns.map(column => <KanbanColumn key={column.stage} {...column}
+        empty={ordersStatus === 'loading' ? 'Loading orders…' : column.empty} orders={byStage[column.stage]}/>)}</div>}
   </section>;
 }
