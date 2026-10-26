@@ -1,13 +1,46 @@
+import {
+  Navigate,
+  Outlet,
+  useLocation,
+} from 'react-router-dom';
 
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { getStaffSession } from '../../services/authSession';
+import {
+  getStaffSession,
+} from '../../services/authSession';
+
+// Check whether the login token is still valid.
+function isTokenValid(token) {
+  try {
+    if (!token || typeof token !== 'string') {
+      return false;
+    }
+
+    const payload = JSON.parse(
+      atob(
+        token.split('.')[1]
+          .replace(/-/g, '+')
+          .replace(/_/g, '/')
+      )
+    );
+
+    return (
+      typeof payload.exp === 'number' &&
+      payload.exp * 1000 > Date.now()
+    );
+  } catch {
+    return false;
+  }
+}
 
 export default function ProtectedRoute({ allowedRole }) {
   const location = useLocation();
   const session = getStaffSession();
 
-  // No login session: redirect to login.
-  if (!session?.access_token || !session?.user?.role) {
+  // 1. User is not logged in.
+  if (
+    !session?.access_token ||
+    !session?.user?.role
+  ) {
     return (
       <Navigate
         to="/login"
@@ -17,32 +50,38 @@ export default function ProtectedRoute({ allowedRole }) {
     );
   }
 
-  // Check token expiration, if it is a JWT.
-  try {
-    const payload = JSON.parse(
-      atob(session.access_token.split('.')[1]
-        .replace(/-/g, '+')
-        .replace(/_/g, '/'))
+  // 2. Login token has expired.
+  if (!isTokenValid(session.access_token)) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+      />
     );
+  }
 
-    if (!payload.exp || payload.exp * 1000 <= Date.now()) {
-      return <Navigate to="/login" replace />;
+  // 3. Check account role.
+  const role = session.user.role;
+
+  if (role !== allowedRole) {
+    // Admin cannot enter Kitchen pages.
+    if (role === 'ADMIN') {
+      return (
+        <Navigate to="/admin" replace />
+      );
     }
-  } catch {
+
+    // Kitchen staff cannot enter Admin pages.
+    if (role === 'KITCHEN_STAFF') {
+      return (
+        <Navigate to="/kitchen" replace />
+      );
+    }
+
     return <Navigate to="/login" replace />;
   }
 
-  // Logged in, but wrong staff role.
-  if (session.user.role !== allowedRole) {
-    const destination =
-      session.user.role === 'ADMIN'
-        ? '/admin'
-        : session.user.role === 'KITCHEN_STAFF'
-          ? '/kitchen'
-          : '/login';
-
-    return <Navigate to={destination} replace />;
-  }
-
+  // 4. Correct role: allow access.
   return <Outlet />;
 }
+
