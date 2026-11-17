@@ -1,3 +1,4 @@
+import { getMenu } from "../controllers/menu.js";
 
 import express from 'express';
 
@@ -28,6 +29,7 @@ import {
 const router = express.Router();
 
 // All routes require staff authentication.
+router.get("/", getMenu);
 router.use(authenticate);
 
 // ==========================================
