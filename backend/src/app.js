@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.js";
 import kitchenRoutes from "./routes/kitchen.js";
 import menuRoutes from "./routes/menu.js";
 import adminRoutes from "./routes/admin.js";
+import orderRoutes from "./routes/order.js";
 
 const app = express();
 
@@ -32,6 +33,11 @@ app.use("/auth", authRoutes);
 app.use("/kitchen", kitchenRoutes);
 app.use("/menu", menuRoutes);
 app.use("/admin", adminRoutes);
+app.use("/api/menu", menuRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/kitchen", kitchenRoutes);
 // Handle unknown routes
 app.use((req, res) => {
   res.status(404).json({

@@ -15,7 +15,7 @@ export default function OrderPanel({ standalone = false }) {
     <div className="order-items" aria-live="polite">
       {items.length === 0 ? <div className="order-empty"><span className="empty-cart-icon"><Icon name="cart" size={38}/></span><h3>Your cart is empty</h3><p>Select items from the menu to start<br/>your dine-in order.</p></div> :
         items.map(item => <article className="order-line" key={item.id}>
-          <img src={item.image} alt=""/><div><h3>{item.name}</h3><p>{money(item.price)}</p><div className="quantity-control"><button aria-label={`Remove one ${item.name}`} onClick={() => changeQuantity(item.id, -1)}>−</button><span>{item.quantity}</span><button aria-label={`Add one ${item.name}`} onClick={() => changeQuantity(item.id, 1)}>+</button></div></div><strong>{money(item.price * item.quantity)}</strong>
+          <span className="order-line-image">{item.image ? <img src={item.image} alt=""/> : <Icon name="menu" size={23}/>}</span><div><h3>{item.name}</h3><p>{money(item.price)}</p><div className="quantity-control"><button aria-label={`Remove one ${item.name}`} onClick={() => changeQuantity(item.id, -1)}>−</button><span>{item.quantity}</span><button aria-label={`Add one ${item.name}`} onClick={() => changeQuantity(item.id, 1)}>+</button></div></div><strong>{money(item.price * item.quantity)}</strong>
         </article>)}
     </div>
     <div className="order-summary">
