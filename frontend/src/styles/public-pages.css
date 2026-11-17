@@ -1,0 +1,548 @@
+
+/* ============================================
+   GATHER GROUNDS — CONTACT PAGE UPDATE
+   ============================================ */
+
+.gg-contact-page {
+  background: #fffefa;
+  color: #203f33;
+}
+
+.gg-contact-page * {
+  box-sizing: border-box;
+}
+
+.gg-contact-page h1,
+.gg-contact-page h2 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  line-height: 1.17;
+  letter-spacing: -1.5px;
+}
+
+.gg-contact-page em {
+  color: #548064;
+  font-weight: 400;
+}
+
+.gg-contact-heading {
+  padding-top: 95px;
+  padding-bottom: 70px;
+}
+
+.gg-contact-heading h1 {
+  font-size: clamp(50px, 6vw, 82px);
+}
+
+.gg-contact-heading > p {
+  max-width: 590px;
+  line-height: 1.9;
+}
+
+/* CONTACT INTRO */
+
+.gg-contact-main {
+  padding-bottom: 110px;
+}
+
+.gg-contact-intro {
+  margin-bottom: 35px;
+}
+
+.gg-contact-intro h2 {
+  font-size: clamp(32px, 3.5vw, 46px);
+  margin: 15px 0;
+}
+
+.gg-contact-intro p {
+  color: #69766c;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* CONTACT CARDS */
+
+.gg-contact-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 19px;
+}
+
+.gg-contact-card {
+  min-width: 0;
+  background: #f8faf6;
+  border: 1px solid #e0e7dd;
+  border-radius: 12px;
+  padding: 32px 26px;
+  min-height: 290px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.gg-contact-card-icon {
+  width: 52px;
+  height: 52px;
+  background: #e8f1e7;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  color: #315d48;
+  font-size: 26px;
+  margin-bottom: 29px;
+}
+
+.gg-contact-card-label {
+  color: #52765b;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+}
+
+.gg-contact-card h3 {
+  margin: 10px 0 14px;
+  font-size: 22px;
+  color: #203f33;
+}
+
+.gg-contact-email,
+.gg-contact-phone-list a {
+  color: #315d48;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.gg-contact-email:hover,
+.gg-contact-phone-list a:hover {
+  text-decoration: underline;
+}
+
+.gg-contact-phone-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.gg-contact-card > p {
+  color: #819084;
+  font-size: 12px;
+  line-height: 1.7;
+  margin-top: auto;
+  padding-top: 20px;
+}
+
+/* SOCIAL MEDIA */
+
+.gg-social-links {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  width: 100%;
+}
+
+.gg-social-links a {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #315d48;
+  font-size: 13px;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.gg-social-links a:hover {
+  color: #1c4030;
+}
+
+.gg-social-links a > span:first-child {
+  width: 27px;
+  height: 27px;
+  border: 1px solid #d9e5d9;
+  border-radius: 7px;
+  background: #edf3eb;
+  display: grid;
+  place-items: center;
+  font-size: 16px;
+}
+
+/* ============================================
+   BRANCH LOCATION SECTION
+   ============================================ */
+
+.gg-branches-section {
+  background: #f2f5ef;
+  padding: 105px 0;
+}
+
+.gg-branches-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 35px;
+  margin-bottom: 45px;
+}
+
+.gg-branches-heading h2 {
+  color: #203f33;
+  font-size: clamp(37px, 4vw, 56px);
+  margin: 17px 0 0;
+}
+
+.gg-branches-heading > p {
+  max-width: 320px;
+  color: #69766c;
+  font-size: 14px;
+  line-height: 1.9;
+  margin-bottom: 5px;
+}
+
+/* BRANCH SELECTOR */
+
+.gg-branch-selector {
+  background: #fffefa;
+  border: 1px solid #dce5da;
+  border-radius: 11px 11px 0 0;
+  padding: 25px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 25px;
+}
+
+.gg-branch-select-info {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.gg-branch-pin {
+  display: grid;
+  place-items: center;
+  width: 47px;
+  height: 47px;
+  border-radius: 9px;
+  background: #e8f0e6;
+  color: #315d48;
+  font-size: 28px;
+}
+
+.gg-branch-select-info > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.gg-branch-select-label {
+  font-size: 10px;
+  color: #6f8b74;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+}
+
+.gg-branch-select-info strong {
+  color: #203f33;
+  font-size: 17px;
+}
+
+/* DROPDOWN */
+
+.gg-branch-select-wrap {
+  width: 300px;
+  max-width: 100%;
+}
+
+.gg-branch-select-wrap select {
+  width: 100%;
+  padding: 14px 38px 14px 16px;
+  color: #203f33;
+  background: #fff;
+  border: 1px solid #d7e2d5;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.gg-branch-select-wrap select:focus {
+  outline: 2px solid #719b78;
+  outline-offset: 2px;
+}
+
+.gg-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ============================================
+   MAP AND BRANCH DETAILS
+   ============================================ */
+
+.gg-branch-map-layout {
+  display: grid;
+  grid-template-columns: 1.45fr 0.75fr;
+  min-height: 430px;
+  background: #fffefa;
+  border: 1px solid #dce5da;
+  border-top: none;
+  border-radius: 0 0 11px 11px;
+  overflow: hidden;
+}
+
+/* MAP */
+
+.gg-branch-map {
+  position: relative;
+  background: #e7ece5;
+  min-height: 430px;
+}
+
+.gg-branch-map iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 430px;
+  border: none;
+}
+
+/* DETAILS PANEL */
+
+.gg-branch-details {
+  padding: 38px 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.gg-branch-details-kicker {
+  color: #65866c;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+}
+
+.gg-branch-details h3 {
+  font-family: Georgia, serif;
+  color: #203f33;
+  font-size: 28px;
+  font-weight: 400;
+  margin: 15px 0 0;
+}
+
+.gg-branch-details-divider {
+  height: 1px;
+  background: #e0e7dd;
+  margin: 25px 0;
+}
+
+.gg-branch-address {
+  display: flex;
+  gap: 13px;
+  margin-bottom: 24px;
+}
+
+.gg-branch-address > span {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 33px;
+  height: 33px;
+  background: #eaf1e8;
+  border-radius: 7px;
+  color: #315d48;
+  font-size: 21px;
+}
+
+.gg-branch-address strong {
+  color: #203f33;
+  font-size: 13px;
+}
+
+.gg-branch-address p {
+  color: #69766c;
+  font-size: 12px;
+  line-height: 1.75;
+  margin: 8px 0 4px;
+}
+
+.gg-branch-address small {
+  color: #9aa79c;
+  font-size: 11px;
+}
+
+/* DIRECTIONS BUTTON */
+
+.gg-branch-directions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  background: #315d48;
+  color: #fff;
+  border-radius: 7px;
+  padding: 16px 20px;
+  font-size: 13px;
+  font-weight: 750;
+  text-decoration: none;
+  margin-top: auto;
+  transition: background 0.2s;
+}
+
+.gg-branch-directions:hover {
+  background: #203f33;
+}
+
+.gg-branch-map-caption {
+  font-size: 11px;
+  color: #98a59b;
+  margin-top: 16px;
+}
+
+/* QUICK BRANCH BUTTONS */
+
+.gg-branch-quick-links {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-top: 25px;
+}
+
+.gg-branch-quick-links > span {
+  color: #7c8a7e;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  margin-right: 10px;
+}
+
+.gg-branch-quick-links button {
+  border: 1px solid #d5e0d3;
+  border-radius: 25px;
+  background: #fffefa;
+  padding: 10px 16px;
+  color: #4c6754;
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.gg-branch-quick-links button:hover {
+  border-color: #315d48;
+}
+
+.gg-branch-quick-links button.active {
+  background: #315d48;
+  color: white;
+  border-color: #315d48;
+}
+
+/* CONTACT BOTTOM */
+
+.gg-contact-bottom {
+  padding: 95px 20px;
+  background: #e7efe5;
+  text-align: center;
+}
+
+.gg-contact-bottom h2 {
+  color: #203f33;
+  font-size: clamp(35px, 4vw, 55px);
+  margin: 20px 0;
+}
+
+.gg-contact-bottom p {
+  color: #69766c;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 1000px) {
+  .gg-contact-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gg-branch-map-layout {
+    grid-template-columns: 1.2fr 0.8fr;
+  }
+}
+
+@media (max-width: 750px) {
+  .gg-contact-heading {
+    padding-top: 65px;
+    padding-bottom: 50px;
+  }
+
+  .gg-contact-main {
+    padding-bottom: 75px;
+  }
+
+  .gg-contact-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .gg-contact-card {
+    min-height: 0;
+  }
+
+  .gg-branches-section {
+    padding: 70px 0;
+  }
+
+  .gg-branches-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .gg-branch-selector {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 22px;
+  }
+
+  .gg-branch-select-wrap {
+    width: 100%;
+  }
+
+  .gg-branch-map-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .gg-branch-map,
+  .gg-branch-map iframe {
+    min-height: 330px;
+    height: 330px;
+  }
+
+  .gg-branch-details {
+    padding: 28px 24px;
+  }
+
+  .gg-branch-directions {
+    margin-top: 10px;
+  }
+
+  .gg-contact-bottom {
+    padding: 70px 20px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gg-branch-directions,
+  .gg-branch-quick-links button {
+    transition: none;
+  }
+}

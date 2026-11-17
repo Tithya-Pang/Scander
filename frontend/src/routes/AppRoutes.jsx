@@ -1,4 +1,11 @@
 import { Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import GGLayout from "../components/layout/GGLayout";
+
+import Home from "../pages/landing/Home";
+import About from "../pages/landing/About";
+import HowItWorks from "../pages/landing/HowItWorks";
+import PublicMenu from "../pages/landing/Menu";
+import Contact from "../pages/landing/Contact";
 import PageLayout from '../components/layout/PageLayout';
 import CustomerMenu from '../pages/customer/Menu';
 import Cart from '../pages/customer/Cart';
@@ -23,10 +30,6 @@ import Placeholder from '../components/common/Placeholder';
 import Login from '../pages/auth/Login';
 import ProtectedRoute from '../components/auth/ProtectedRoute';
 
-function Home() {
-  const { search } = useLocation();
-  return <main className="home"><span className="eyebrow">GATHER GROUNDS · SCANDER</span><h1>Restaurant ordering, made simple.</h1><p>Choose an interface to preview the frontend.</p><div className="home-links"><Link className="btn btn-primary" to={{ pathname: "/customer/menu", search }}>Customer</Link><Link className="btn btn-outline" to="/kitchen">Kitchen</Link><Link className="btn btn-outline" to="/admin">Admin</Link></div></main>;
-}
 function CustomerRedirect({ to }) {
   const { search, hash } = useLocation();
   return <Navigate to={{ pathname: to, search, hash }} replace />;
@@ -45,9 +48,13 @@ const adminLinks = [
 
 export default function AppRoutes() {
   return <Routes>
-    {/* <Route path="/" element={<Home/>}/> */}
-    <Route path="/" element={<Navigate to="/login" replace />}
-/>
+    <Route element={<GGLayout />}>
+      <Route path="/" element={<Home />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/menu" element={<PublicMenu />} />
+      <Route path="/how-it-works" element={<HowItWorks />} />
+      <Route path="/contact" element={<Contact />} />
+    </Route>
     <Route element={<CustomerLayout/>}>
       <Route path="/customer/menu" element={<CustomerMenu/>}/>
       <Route path="/customer/cart" element={<Cart/>}/>
@@ -77,7 +84,6 @@ export default function AppRoutes() {
     </Route>
     </Route>
     <Route path="/login" element={<Login/>}/>
-    <Route path="/menu" element={<CustomerRedirect to="/customer/menu"/>}/>
     <Route path="/cart" element={<CustomerRedirect to="/customer/cart"/>}/>
     <Route path="/orders" element={<CustomerRedirect to="/customer/orders"/>}/>
     <Route path="*" element={<Navigate to="/" replace/>}/>

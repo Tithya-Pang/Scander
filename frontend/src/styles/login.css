@@ -1,0 +1,512 @@
+
+/* ==========================================
+   GATHER GROUNDS — STAFF LOGIN
+   ========================================== */
+
+.gg-login {
+  --gg-primary: #246b4c;
+  --gg-dark: #173c2d;
+  --gg-text: #202b25;
+  --gg-muted: #78867c;
+  --gg-border: #dfe7e0;
+
+  display: grid;
+  grid-template-columns: 52% 48%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #fff;
+  color: var(--gg-text);
+  font-family: var(--font, Inter, sans-serif);
+}
+
+.gg-login * {
+  box-sizing: border-box;
+}
+
+/* LEFT PANEL */
+
+.gg-login-visual {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 40px 55px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: white;
+  background-color: #19372b;
+  background-image:
+    linear-gradient(
+      180deg,
+      rgba(10, 27, 19, 0.25) 0%,
+      rgba(10, 27, 19, 0.48) 48%,
+      rgba(10, 27, 19, 0.88) 100%
+    ),
+    url("/images/gather-grounds.jpg");
+  background-position: center;
+  background-size: cover;
+}
+
+.gg-login-back {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 10px;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-weight: 600;
+  transition: gap 0.2s;
+}
+
+.gg-login-back:hover {
+  gap: 16px;
+}
+
+.gg-login-visual-content {
+  max-width: 540px;
+  padding: 35px 0;
+}
+
+.gg-login-visual-mark {
+  width: 68px;
+  height: 68px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
+  backdrop-filter: blur(8px);
+  margin-bottom: 30px;
+}
+
+.gg-login-visual-mark span {
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -2px;
+}
+
+.gg-login-visual-kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: #cbe7d2;
+  margin-bottom: 16px;
+}
+
+.gg-login-visual-content h2 {
+  color: white;
+  font-size: clamp(38px, 4.2vw, 65px);
+  font-weight: 750;
+  letter-spacing: -2.6px;
+  line-height: 1.1;
+  margin: 0 0 24px;
+}
+
+.gg-login-visual-description {
+  max-width: 440px;
+  font-size: 15px;
+  line-height: 1.9;
+  color: rgba(255, 255, 255, 0.82);
+  margin: 0;
+}
+
+.gg-login-visual-divider {
+  width: 48px;
+  height: 2px;
+  background: #a1d1ad;
+  margin: 32px 0 19px;
+}
+
+.gg-login-powered {
+  color: #d4e5d8;
+  font-size: 11px;
+  letter-spacing: 1.6px;
+}
+
+.gg-login-powered strong {
+  color: white;
+  font-weight: 800;
+}
+
+.gg-login-visual-footer {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* RIGHT PANEL */
+
+.gg-login-panel {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 35px clamp(25px, 4vw, 75px);
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.gg-login-panel-top {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.gg-login-staff-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 13px;
+  border-radius: 30px;
+  background: #f0f6f1;
+  color: var(--gg-primary);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.3px;
+}
+
+.gg-login-tag-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #43a56f;
+}
+
+.gg-login-mobile-brand {
+  display: none;
+}
+
+/* FORM CONTENT */
+
+.gg-login-form-container {
+  width: 100%;
+  max-width: 450px;
+  margin: auto;
+  padding: 65px 0;
+}
+
+.gg-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 48px;
+}
+
+.gg-login-brand-icon {
+  width: 39px;
+  height: 39px;
+  background: var(--gg-primary);
+  color: #fff;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.gg-login-brand > span {
+  color: var(--gg-dark);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -1.4px;
+}
+
+.gg-login-brand > span > span {
+  color: #7caa88;
+}
+
+.gg-login-eyebrow {
+  color: var(--gg-primary);
+  font-size: 10px;
+  letter-spacing: 2px;
+  font-weight: 800;
+}
+
+.gg-login-heading {
+  margin-bottom: 35px;
+}
+
+.gg-login-heading h1 {
+  font-size: clamp(32px, 3vw, 43px);
+  color: var(--gg-dark);
+  letter-spacing: -1.8px;
+  margin: 13px 0;
+  line-height: 1.2;
+}
+
+.gg-login-heading p {
+  color: var(--gg-muted);
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* INPUT FIELDS */
+
+.gg-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 23px;
+}
+
+.gg-login-field {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gg-login-field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #34443a;
+}
+
+.gg-login-input-wrap {
+  height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 15px;
+  border: 1px solid var(--gg-border);
+  background: #fff;
+  border-radius: 9px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.gg-login-input-wrap:focus-within {
+  border-color: #54a575;
+  box-shadow: 0 0 0 3px rgba(65, 145, 96, 0.12);
+}
+
+.gg-login-input-wrap > svg {
+  width: 19px;
+  height: 19px;
+  color: #92a299;
+  flex-shrink: 0;
+}
+
+.gg-login-input-wrap input {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 14px;
+  color: var(--gg-text);
+}
+
+.gg-login-input-wrap input::placeholder {
+  color: #a5aea8;
+}
+
+.gg-login-input-wrap input:disabled {
+  cursor: not-allowed;
+}
+
+.gg-login-eye {
+  border: 0;
+  padding: 5px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: #84948a;
+  cursor: pointer;
+}
+
+.gg-login-eye:hover {
+  color: var(--gg-primary);
+}
+
+.gg-login-eye svg {
+  height: 19px;
+  width: 19px;
+}
+
+/* LOGIN BUTTON */
+
+.gg-login-submit {
+  width: 100%;
+  min-height: 54px;
+  border: none;
+  border-radius: 9px;
+  background: var(--gg-primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.gg-login-submit:hover:not(:disabled) {
+  background: var(--gg-dark);
+  transform: translateY(-1px);
+}
+
+.gg-login-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.gg-login-error {
+  padding: 12px 14px;
+  background: #fff0f0;
+  color: #b03535;
+  border: 1px solid #f5d0d0;
+  border-radius: 8px;
+  font-size: 13px;
+  margin: 0;
+}
+
+.gg-login-help {
+  font-size: 12px;
+  text-align: center;
+  line-height: 1.7;
+  color: #93a096;
+  margin: 24px 0 0;
+}
+
+/* EXISTING SESSION */
+
+.gg-login-session {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 17px;
+  border: 1px solid #dce8df;
+  border-radius: 11px;
+  background: #f5f9f5;
+  margin-bottom: 22px;
+}
+
+.gg-login-avatar {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: #dcefe1;
+  color: var(--gg-primary);
+  font-weight: 800;
+}
+
+.gg-login-session > div:last-child {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.gg-login-session strong {
+  font-size: 14px;
+  color: var(--gg-dark);
+}
+
+.gg-login-session span {
+  font-size: 12px;
+  color: var(--gg-muted);
+  overflow-wrap: anywhere;
+}
+
+.gg-login-switch {
+  background: transparent;
+  border: 0;
+  color: var(--gg-primary);
+  font-weight: 700;
+  font-size: 13px;
+  padding: 14px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.gg-login-switch:hover {
+  text-decoration: underline;
+}
+
+/* FOOTER */
+
+.gg-login-panel-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  color: #9aa69e;
+  font-size: 11px;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 950px) {
+  .gg-login {
+    grid-template-columns: 43% 57%;
+  }
+
+  .gg-login-visual {
+    padding: 32px;
+  }
+
+  .gg-login-panel {
+    padding: 30px;
+  }
+
+  .gg-login-visual-content h2 {
+    font-size: 39px;
+  }
+}
+
+@media (max-width: 700px) {
+  .gg-login {
+    display: block;
+  }
+
+  .gg-login-visual {
+    display: none;
+  }
+
+  .gg-login-panel {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 25px 24px;
+  }
+
+  .gg-login-panel-top {
+    justify-content: space-between;
+  }
+
+  .gg-login-mobile-brand {
+    display: block;
+    color: var(--gg-dark);
+    font-size: 17px;
+    font-weight: 800;
+  }
+
+  .gg-login-mobile-brand span {
+    color: #7caa88;
+  }
+
+  .gg-login-form-container {
+    padding: 60px 0;
+  }
+
+  .gg-login-brand {
+    margin-bottom: 38px;
+  }
+
+  .gg-login-panel-footer {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .gg-login-panel {
+    padding: 20px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gg-login * {
+    transition: none !important;
+  }
+}

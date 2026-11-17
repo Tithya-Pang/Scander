@@ -1,30 +1,21 @@
-import { useState } from 'react';
-import {
-  Link,
-  useNavigate,
-} from 'react-router-dom';
 
-import { loginStaff } from '../../services/authService';
-
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { loginStaff } from "../../services/authService";
 import {
   saveStaffSession,
   getStaffSession,
   clearStaffSession,
-} from '../../services/authSession';
+} from "../../services/authSession";
+import "../../styles/login.css";
 
-// ==========================================
-// HELPERS
-// ==========================================
+// ----------------------------------------
+// Existing authentication helpers
+// ----------------------------------------
 
 function getDashboardPath(role) {
-  if (role === 'ADMIN') {
-    return '/admin';
-  }
-
-  if (role === 'KITCHEN_STAFF') {
-    return '/kitchen';
-  }
-
+  if (role === "ADMIN") return "/admin";
+  if (role === "KITCHEN_STAFF") return "/kitchen";
   return null;
 }
 
@@ -40,14 +31,14 @@ function isSessionValid(session) {
     const payload = JSON.parse(
       atob(
         session.access_token
-          .split('.')[1]
-          .replace(/-/g, '+')
-          .replace(/_/g, '/')
+          .split(".")[1]
+          .replace(/-/g, "+")
+          .replace(/_/g, "/")
       )
     );
 
     return (
-      typeof payload.exp === 'number' &&
+      typeof payload.exp === "number" &&
       payload.exp * 1000 > Date.now()
     );
   } catch {
@@ -55,65 +46,82 @@ function isSessionValid(session) {
   }
 }
 
-// ==========================================
-// LOGIN PAGE
-// ==========================================
+// ----------------------------------------
+// Icons
+// ----------------------------------------
+
+function MailIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <path d="m3 7 9 6 9-6" />
+    </svg>
+  );
+}
+
+function LockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="5" y="10" width="14" height="11" rx="2" />
+      <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+    </svg>
+  );
+}
+
+function EyeIcon({ hidden }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" />
+      <circle cx="12" cy="12" r="3" />
+      {hidden && <path d="M3 21 21 3" />}
+    </svg>
+  );
+}
+
+// ----------------------------------------
+// Login Component
+// ----------------------------------------
 
 export default function Login() {
   const navigate = useNavigate();
 
-  // Check whether a valid staff session exists.
-  const [currentSession, setCurrentSession] =
-    useState(() => {
-      const session = getStaffSession();
+  const [currentSession, setCurrentSession] = useState(() => {
+    const session = getStaffSession();
+    return isSessionValid(session) ? session : null;
+  });
 
-      return isSessionValid(session)
-        ? session
-        : null;
-    });
-
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [message, setMessage] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
-
-  // ==========================================
-  // SWITCH ACCOUNT
-  // ==========================================
 
   function handleSwitchAccount() {
     clearStaffSession();
-
     setCurrentSession(null);
-    setEmail('');
-    setPassword('');
-    setMessage('');
+    setEmail("");
+    setPassword("");
+    setMessage("");
   }
-
-  // ==========================================
-  // CONTINUE EXISTING SESSION
-  // ==========================================
 
   function handleContinue() {
     if (!currentSession) return;
 
-    const path = getDashboardPath(
+    const destination = getDashboardPath(
       currentSession.user.role
     );
 
-    if (path) {
-      navigate(path, { replace: true });
+    if (destination) {
+      navigate(destination, { replace: true });
     }
   }
 
-  // ==========================================
-  // STAFF LOGIN
-  // ==========================================
-
   async function handleSubmit(event) {
     event.preventDefault();
-
-    setMessage('');
+    setMessage("");
     setLoading(true);
 
     try {
@@ -122,23 +130,19 @@ export default function Login() {
         password
       );
 
-      // Support both direct and wrapped API responses.
       const result = response.data ?? response;
-
       const accessToken = result.access_token;
       const user = result.user;
 
       if (!accessToken || !user?.role) {
-        throw new Error('Invalid login response');
+        throw new Error("Invalid login response");
       }
 
-      const destination = getDashboardPath(
-        user.role
-      );
+      const destination = getDashboardPath(user.role);
 
       if (!destination) {
         setMessage(
-          'Your account does not have staff access.'
+          "Your account does not have staff access."
         );
         return;
       }
@@ -150,22 +154,18 @@ export default function Login() {
         user,
       });
 
-      navigate(destination, {
-        replace: true,
-      });
+      navigate(destination, { replace: true });
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error("Login failed:", error);
 
       if (
         error.status === 400 ||
         error.status === 401
       ) {
-        setMessage(
-          'Incorrect email or password.'
-        );
+        setMessage("Incorrect email or password.");
       } else {
         setMessage(
-          'Unable to sign in. Please check your connection and try again.'
+          "Unable to sign in. Check your connection and try again."
         );
       }
     } finally {
@@ -173,150 +173,237 @@ export default function Login() {
     }
   }
 
-  // ==========================================
-  // PAGE UI
-  // ==========================================
-
   return (
-    <main className="login-page">
-      <section
-        className="card login-card"
-        aria-labelledby="login-title"
-      >
-
-        {/* BRAND */}
-        <Link to="/" className="brand">
-          Gather Grounds<span>.</span>
+    <main className="gg-login">
+      {/* LEFT: RESTAURANT BRANDING */}
+      <section className="gg-login-visual">
+        <Link to="/" className="gg-login-back">
+          <span aria-hidden="true">←</span> Back to website
         </Link>
 
-        {currentSession ? (
-          // ==================================
-          // ALREADY LOGGED IN
-          // ==================================
-          <>
-            <h1 id="login-title">
-              Welcome back
-            </h1>
+        <div className="gg-login-visual-content">
+          <div className="gg-login-visual-mark">
+            <span>GG</span>
+          </div>
 
-            <p className="muted">
-              You are already signed in to Scander.
-            </p>
+          <p className="gg-login-visual-kicker">
+            GATHER GROUNDS
+          </p>
 
-            <div
-              style={{
-                padding: 16,
-                margin: '18px 0',
-                borderRadius: 12,
-                background: '#f3f7f5',
-                border: '1px solid #e3ece7',
-              }}
-            >
-              <strong>
-                {currentSession.user.role === 'ADMIN'
-                  ? 'Administrator'
-                  : 'Kitchen Staff'}
-              </strong>
+          <h2>
+            Great service starts
+            <br />
+            behind the scenes.
+          </h2>
 
-              <p
-                className="muted"
-                style={{ marginTop: 6 }}
-              >
-                {currentSession.user.email ||
-                  'Staff account'}
-              </p>
-            </div>
+          <p className="gg-login-visual-description">
+            One connected workspace for smoother restaurant
+            operations, better coordination, and great
+            dining experiences.
+          </p>
 
-            <button
-              type="button"
-              className="btn btn-primary"
-              onClick={handleContinue}
-              style={{ width: '100%' }}
-            >
-              Continue to Dashboard
-            </button>
+          <div className="gg-login-visual-divider" />
 
-            <button
-              type="button"
-              className="btn btn-outline"
-              onClick={handleSwitchAccount}
-              style={{
-                width: '100%',
-                marginTop: 12,
-              }}
-            >
-              Switch Account
-            </button>
-          </>
-        ) : (
-          // ==================================
-          // LOGIN FORM
-          // ==================================
-          <>
-            <h1 id="login-title">
-              Staff sign in
-            </h1>
+          <span className="gg-login-powered">
+            POWERED BY <strong>SCANDER.</strong>
+          </span>
+        </div>
 
-            <p className="muted">
-              Use your assigned administrator
-              or kitchen staff account.
-            </p>
+        <span className="gg-login-visual-footer">
+          Gather Grounds Restaurant Management
+        </span>
+      </section>
 
-            <form onSubmit={handleSubmit}>
+      {/* RIGHT: STAFF LOGIN */}
+      <section className="gg-login-panel">
+        <div className="gg-login-panel-top">
+          <Link to="/" className="gg-login-mobile-brand">
+            Gather Grounds<span>.</span>
+          </Link>
 
-              <label htmlFor="email">
-                Email
-              </label>
+          <span className="gg-login-staff-tag">
+            <span className="gg-login-tag-dot" />
+            STAFF PORTAL
+          </span>
+        </div>
 
-              <input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="username"
-                value={email}
-                onChange={event =>
-                  setEmail(event.target.value)
-                }
-                required
-                disabled={loading}
-              />
+        <div className="gg-login-form-container">
+          <div className="gg-login-brand">
+            <div className="gg-login-brand-icon">S</div>
+            <span>scander<span>.</span></span>
+          </div>
 
-              <label htmlFor="password">
-                Password
-              </label>
+          {currentSession ? (
+            <>
+              <div className="gg-login-heading">
+                <span className="gg-login-eyebrow">
+                  WELCOME BACK
+                </span>
+                <h1>You're signed in.</h1>
+                <p>
+                  Your workspace is ready whenever you are.
+                </p>
+              </div>
 
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={event =>
-                  setPassword(event.target.value)
-                }
-                required
-                disabled={loading}
-              />
+              <div className="gg-login-session">
+                <div className="gg-login-avatar">
+                  {currentSession.user.role === "ADMIN"
+                    ? "A"
+                    : "K"}
+                </div>
+
+                <div>
+                  <strong>
+                    {currentSession.user.role === "ADMIN"
+                      ? "Administrator"
+                      : "Kitchen Staff"}
+                  </strong>
+
+                  <span>
+                    {currentSession.user.email ||
+                      "Staff account"}
+                  </span>
+                </div>
+              </div>
 
               <button
-                className="btn btn-primary"
-                type="submit"
-                disabled={loading}
+                className="gg-login-submit"
+                type="button"
+                onClick={handleContinue}
               >
-                {loading
-                  ? 'Signing in...'
-                  : 'Sign in'}
+                Continue to Dashboard
+                <span aria-hidden="true">→</span>
               </button>
-            </form>
 
-            {message && (
-              <p role="alert">
-                {message}
+              <button
+                className="gg-login-switch"
+                type="button"
+                onClick={handleSwitchAccount}
+              >
+                Sign in with another account
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="gg-login-heading">
+                <span className="gg-login-eyebrow">
+                  STAFF ACCESS
+                </span>
+
+                <h1>Welcome back.</h1>
+
+                <p>
+                  Sign in to manage your Gather Grounds
+                  workspace.
+                </p>
+              </div>
+
+              <form
+                className="gg-login-form"
+                onSubmit={handleSubmit}
+              >
+                <div className="gg-login-field">
+                  <label htmlFor="email">
+                    Email address
+                  </label>
+
+                  <div className="gg-login-input-wrap">
+                    <MailIcon />
+
+                    <input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="you@gathergrounds.com"
+                      autoComplete="username"
+                      value={email}
+                      onChange={(e) =>
+                        setEmail(e.target.value)
+                      }
+                      required
+                      disabled={loading}
+                    />
+                  </div>
+                </div>
+
+                <div className="gg-login-field">
+                  <label htmlFor="password">
+                    Password
+                  </label>
+
+                  <div className="gg-login-input-wrap">
+                    <LockIcon />
+
+                    <input
+                      id="password"
+                      name="password"
+                      type={
+                        showPassword ? "text" : "password"
+                      }
+                      placeholder="Enter your password"
+                      autoComplete="current-password"
+                      value={password}
+                      onChange={(e) =>
+                        setPassword(e.target.value)
+                      }
+                      required
+                      disabled={loading}
+                    />
+
+                    <button
+                      type="button"
+                      className="gg-login-eye"
+                      aria-label={
+                        showPassword
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                      aria-pressed={showPassword}
+                      onClick={() =>
+                        setShowPassword((prev) => !prev)
+                      }
+                    >
+                      <EyeIcon hidden={showPassword} />
+                    </button>
+                  </div>
+                </div>
+
+                {message && (
+                  <p className="gg-login-error" role="alert">
+                    {message}
+                  </p>
+                )}
+
+                <button
+                  className="gg-login-submit"
+                  type="submit"
+                  disabled={loading}
+                >
+                  <span>
+                    {loading
+                      ? "Signing in..."
+                      : "Sign In to Workspace"}
+                  </span>
+
+                  {!loading && (
+                    <span aria-hidden="true">→</span>
+                  )}
+                </button>
+              </form>
+
+              <p className="gg-login-help">
+                Need account access? Contact your
+                restaurant administrator.
               </p>
-            )}
-          </>
-        )}
+            </>
+          )}
+        </div>
+
+        <div className="gg-login-panel-footer">
+          <span>© {new Date().getFullYear()} Gather Grounds</span>
+          <span>Powered by Scander</span>
+        </div>
       </section>
     </main>
   );
 }
-
