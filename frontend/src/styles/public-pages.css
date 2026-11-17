@@ -1,4 +1,3 @@
-
 /* ============================================
    GATHER GROUNDS — CONTACT PAGE UPDATE
    ============================================ */
@@ -546,3 +545,284 @@
     transition: none;
   }
 }
+
+
+/* ========================================
+   GATHER GROUNDS — PUBLIC MENU
+   ======================================== */
+
+.gg-public-menu {
+  background: #fffefa;
+  min-height: 100vh;
+  color: #203f33;
+}
+
+/* MENU HEADER */
+
+.gg-menu-intro {
+  padding-top: 90px;
+  padding-bottom: 65px;
+}
+
+.gg-menu-intro h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(45px, 5.5vw, 76px);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -2px;
+  color: #203f33;
+  margin: 23px 0;
+}
+
+.gg-menu-intro h1 em {
+  color: #548064;
+  font-weight: 400;
+}
+
+.gg-menu-intro > p {
+  max-width: 570px;
+  color: #69766c;
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+/* MENU SECTION */
+
+.gg-menu-section {
+  padding-bottom: 100px;
+}
+
+.gg-menu-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 25px;
+  margin-bottom: 30px;
+}
+
+.gg-menu-toolbar h2 {
+  font-family: Georgia, serif;
+  font-size: 34px;
+  font-weight: 400;
+  margin: 10px 0 0;
+  color: #203f33;
+}
+
+.gg-menu-search {
+  border: 1px solid #dce4da;
+  background: #fff;
+  border-radius: 7px;
+  width: 310px;
+  max-width: 100%;
+  padding: 15px 18px;
+  font-size: 13px;
+  color: #203f33;
+}
+
+.gg-menu-search:focus {
+  outline: 2px solid #78947c;
+  outline-offset: 2px;
+}
+
+/* CATEGORY FILTER BUTTONS */
+
+.gg-menu-filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 35px;
+}
+
+.gg-menu-filters button {
+  border: 1px solid #dfe5dc;
+  background: #fffefa;
+  color: #52685a;
+  padding: 12px 20px;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  transition: 0.2s;
+}
+
+.gg-menu-filters button:hover {
+  border-color: #315d48;
+}
+
+.gg-menu-filters button.active {
+  background: #203f33;
+  border-color: #203f33;
+  color: white;
+}
+
+/* MENU GRID */
+
+.gg-public-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 25px;
+}
+
+/* MENU CARDS */
+
+.gg-public-menu-card {
+  overflow: hidden;
+  background: #fffefa;
+  border: 1px solid #e0e5dc;
+  border-radius: 10px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.gg-public-menu-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(30, 63, 48, 0.09);
+}
+
+/* FOOD IMAGE */
+
+.gg-public-menu-image {
+  height: 235px;
+  background: #e8ede5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #879587;
+}
+
+.gg-public-menu-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* FOOD DETAILS */
+
+.gg-public-menu-info {
+  padding: 23px;
+}
+
+.gg-public-category {
+  color: #547960;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+.gg-public-menu-info h3 {
+  color: #203f33;
+  font-size: 18px;
+  margin: 12px 0;
+}
+
+.gg-public-menu-info > p {
+  color: #78867c;
+  font-size: 13px;
+  line-height: 1.7;
+  min-height: 45px;
+}
+
+.gg-public-menu-bottom {
+  border-top: 1px solid #e6ebe3;
+  padding-top: 18px;
+  margin-top: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.gg-public-menu-bottom strong {
+  color: #203f33;
+  font-size: 19px;
+}
+
+.gg-public-menu-bottom span {
+  font-size: 11px;
+  color: #879587;
+}
+
+/* EMPTY SEARCH RESULTS */
+
+.gg-menu-empty {
+  padding: 65px 20px;
+  text-align: center;
+}
+
+.gg-menu-empty button {
+  background: #203f33;
+  border: 0;
+  color: #fff;
+  border-radius: 5px;
+  padding: 12px 20px;
+  cursor: pointer;
+}
+
+/* QR ORDERING INFORMATION */
+
+.gg-menu-notice {
+  background: #eaf0e8;
+  padding: 70px 0;
+}
+
+.gg-menu-notice-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 35px;
+}
+
+.gg-menu-notice h2 {
+  color: #203f33;
+  font-family: Georgia, serif;
+  font-size: 36px;
+  font-weight: 400;
+  margin: 14px 0;
+}
+
+.gg-menu-notice p {
+  max-width: 540px;
+  color: #69766c;
+  line-height: 1.8;
+}
+
+.gg-menu-notice-icon {
+  color: #315d48;
+}
+
+/* RESPONSIVE */
+
+@media (max-width: 900px) {
+  .gg-public-menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 650px) {
+  .gg-menu-intro {
+    padding-top: 60px;
+    padding-bottom: 45px;
+  }
+
+  .gg-menu-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .gg-menu-search {
+    width: 100%;
+  }
+
+  .gg-public-menu-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .gg-public-menu-image {
+    height: 250px;
+  }
+
+  .gg-menu-notice-inner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
