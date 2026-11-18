@@ -21,3 +21,14 @@ test('rejects unverified tables, empty carts, duplicate items, invalid quantitie
     { instructions: 'x'.repeat(501) }, { instructions: {} },
   ]) assert.throws(() => validateOrder({ ...valid(), ...override }), error => error.status === 400);
 });
+test('defaults to pay at counter and keeps only card brand and last 4 digits', () => {
+  assert.deepEqual(validateOrder(valid()).payment, { method: 'COUNTER' });
+  assert.deepEqual(validateOrder({ ...valid(), payment: { method: 'COUNTER', brand: 'VISA' } }).payment, { method: 'COUNTER' });
+  assert.deepEqual(validateOrder({ ...valid(), payment: { method: 'CARD', brand: 'VISA', last4: '4242', number: '4242424242424242', cvc: '123' } }).payment,
+    { method: 'CARD', brand: 'VISA', last4: '4242' });
+});
+test('rejects unknown payment methods and malformed card summaries', () => {
+  for (const payment of [{ method: 'CASH' }, { method: 'CARD' }, { method: 'CARD', brand: 'AMEX', last4: '0005' },
+    { method: 'CARD', brand: 'VISA', last4: '42' }, { method: 'CARD', brand: 'VISA', last4: 4242 }, 'CARD'])
+    assert.throws(() => validateOrder({ ...valid(), payment }), error => error.status === 400);
+});

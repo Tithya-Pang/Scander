@@ -4847,3 +4847,8 @@
     height: 36px;
   }
 }
+
+.admin-shell .a-brand{flex-direction:column;align-items:flex-start;gap:6px}
+.admin-shell .a-logo{width:150px}
+.admin-shell .a-brand-label{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--a-muted)}
+.a-qr-brand .a-qr-logo{width:170px}

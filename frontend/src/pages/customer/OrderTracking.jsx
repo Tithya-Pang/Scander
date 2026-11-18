@@ -7,6 +7,11 @@ import { readReceipt } from '../../utils/orderReceipt';
 import { getOrder } from '../../services/orders';
 
 const money = value => `$${value.toFixed(2)}`;
+const brandLabel = { VISA: 'Visa', MASTERCARD: 'Mastercard' };
+function PaymentStatus({ payment, total }) {
+  if (payment?.status === 'PAID') return <div className="tracking-payment is-paid"><Icon name="checkCircle" size={20}/><div><strong>Paid {money(total)}</strong><span>{brandLabel[payment.brand] || 'Card'} •••• {payment.last4}</span></div></div>;
+  return <div className="tracking-payment"><Icon name="bag" size={20}/><div><strong>Pay at the counter</strong><span>Please pay {money(total)} before you leave.</span></div></div>;
+}
 export default function OrderTracking() {
   const { search, state } = useLocation();
   const qr = new URLSearchParams(search).get('qr') || '';
@@ -59,7 +64,7 @@ export default function OrderTracking() {
         <div className="card tracking-progress"><div className="tracking-progress-top"><span className="eyebrow">{order.number}</span><span className="tracking-status">{stage.label}</span></div><div className="tracking-status-message" role="status"><span className="tracking-current-icon"><Icon name={stage.icon} size={32}/></span><div><h2>{stage.label === 'Received' ? 'Order received' : stage.label === 'Preparing' ? 'A little goodness in the making' : stage.label === 'Ready' ? 'Ready for your table' : stage.label === 'Served' ? 'Enjoy every bite' : stage.label}</h2><p>{stage.description}</p></div></div>{order.status !== 'CANCELLED' && <ol className="tracking-steps">{orderStages.map((item, stageIndex) => <li key={item.status} className={stageIndex <= index ? 'is-complete' : ''} aria-current={stageIndex === index ? 'step' : undefined}><span className="tracking-step-icon"><Icon name={stageIndex < index ? 'check' : item.icon} size={22}/></span><strong>{item.label}</strong></li>)}</ol>}<p className="tracking-footnote">Saved to the restaurant database. Status refreshes automatically.</p></div>
         <Link className="tracking-back" to={{ pathname: '/customer/menu', search }}><Icon name="chevronLeft" size={17}/> Back to menu</Link>
       </div>
-      <aside className="card tracking-receipt"><div className="tracking-receipt-header"><h2>Your order summary</h2><span>{order.count} {order.count === 1 ? 'item' : 'items'}</span></div><ul>{order.items.map(item => <li key={item.id}><span className="tracking-item-quantity">{item.quantity}×</span><span>{item.name}</span><strong>{money(item.price * item.quantity)}</strong></li>)}</ul>{order.instructions && <div className="tracking-instructions"><h3><Icon name="note" size={17}/> Kitchen instructions</h3><p>{order.instructions}</p></div>}<dl className="order-totals"><div><dt>Subtotal</dt><dd>{money(order.subtotal)}</dd></div><div><dt>Tax (8%)</dt><dd>{money(order.tax)}</dd></div><div className="order-total"><dt>Total</dt><dd>{money(order.total)}</dd></div></dl><p className="tracking-footnote">Payment is handled separately.</p></aside>
+      <aside className="card tracking-receipt"><div className="tracking-receipt-header"><h2>Your order summary</h2><span>{order.count} {order.count === 1 ? 'item' : 'items'}</span></div><ul>{order.items.map(item => <li key={item.id}><span className="tracking-item-quantity">{item.quantity}×</span><span>{item.name}</span><strong>{money(item.price * item.quantity)}</strong></li>)}</ul>{order.instructions && <div className="tracking-instructions"><h3><Icon name="note" size={17}/> Kitchen instructions</h3><p>{order.instructions}</p></div>}<dl className="order-totals"><div><dt>Subtotal</dt><dd>{money(order.subtotal)}</dd></div><div><dt>Tax (8%)</dt><dd>{money(order.tax)}</dd></div><div className="order-total"><dt>Total</dt><dd>{money(order.total)}</dd></div></dl><PaymentStatus payment={order.payment} total={order.total}/></aside>
     </div>}
   </section>;
 }

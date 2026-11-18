@@ -102,3 +102,6 @@
     margin-top: 8px;
   }
 }
+/* Logo sized by width; .brand-logo sets height:auto. */
+.gg-brand .gg-logo{width:118px;flex-shrink:0}.gg-footer .gg-footer-logo{width:96px}
+@media(max-width:460px){.gg-brand .gg-logo{width:96px}}

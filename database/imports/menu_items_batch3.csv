@@ -1,0 +1,13 @@
+restaurant_id,category_id,name,description,price,image_url,is_available,is_active
+1,13,Iced Cacao,Rich chocolatey cacao with milk over ice,2.75,/images/menu/iced-cacao.jpg,true,true
+1,13,Lychee Rose Jasmine Tea,Iced jasmine tea with lychee and a hint of rose,2.55,/images/menu/lychee-rose-jasmine-tea.jpg,true,true
+1,13,Chia Cacao Coconut Smoothie (M),"Creamy coconut smoothie with cacao, chia and toasted coconut flakes",3.25,/images/menu/chia-cacao-coconut-smoothie.jpg,true,true
+1,13,Rambutan Pineapple Jasmine Tea,"Iced jasmine tea with rambutan, pineapple and pandan",2.55,/images/menu/rambutan-pineapple-jasmine-tea.jpg,true,true
+1,10,Lot Cha,"Stir-fried short rice noodles with beef, chives, bean sprouts and a soft egg",3.80,/images/menu/lot-cha.jpg,true,true
+1,10,Seafood Noodle Soup,"Rice noodle soup with prawns, fish, fresh herbs, lime and chilli on the side",4.50,/images/menu/seafood-noodle-soup.jpg,true,true
+1,13,Witch Gaze,"Layered charcoal, mango and red fruit drink topped with lychee",3.55,/images/menu/witch-gaze.jpg,true,true
+1,11,Crispy Shrimp Toast Bites,"Golden toast topped with shrimp paste and prawns, served with sweet chilli sauce",4.50,/images/menu/crispy-shrimp-toast-bites.jpg,true,true
+1,11,Loaded Cheesy Fries,"Fries topped with melted cheese, chilli and crispy bits",4.00,/images/menu/loaded-cheesy-fries.jpg,true,true
+1,10,Beef Lasagna,"Layered pasta with rich beef ragù, parmesan and crispy basil",6.00,/images/menu/beef-lasagna.jpg,true,true
+1,13,Palm Latte,Iced latte sweetened with palm sugar and topped with golden jelly,3.55,/images/menu/palm-latte.jpg,true,true
+1,13,Mango Passion Glow,Blended mango smoothie topped with fresh passion fruit,3.55,/images/menu/mango-passion-glow.jpg,true,true

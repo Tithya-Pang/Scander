@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet } from "react-router-dom";
 import "../../styles/home.css";
+import BrandLogo from "../common/BrandLogo";
 
 const links = [
   { to: "/", label: "Home", end: true },
@@ -27,14 +28,7 @@ export default function GGLayout() {
             onClick={closeMenu}
             aria-label="Gather Grounds home"
           >
-            <span className="gg-brand-symbol" aria-hidden="true">
-              g<span>.</span>
-            </span>
-
-            <span className="gg-brand-words">
-              <strong>GATHER GROUNDS</strong>
-              <small>POWERED BY SCANDER</small>
-            </span>
+            <BrandLogo className="gg-logo" />
           </Link>
 
           {/* Mobile menu button */}
@@ -94,7 +88,7 @@ export default function GGLayout() {
       {/* Shared footer */}
       <footer className="gg-footer">
         <div className="gg-container gg-footer-content">
-          <strong>GATHER GROUNDS</strong>
+          <BrandLogo className="gg-footer-logo" />
 
           <span>
             Your dining experience, powered by Scander.

@@ -12,6 +12,10 @@
 
 Import this CSV once. Importing again adds duplicate rows because the table does not have a unique constraint on menu names.
 
+## Batch 2 (`add_menu_batch2.sql`)
+
+Adds a new **Drinks** category and seven items (Korean Spicy Fried Chicken, Crispy Chicken Karaage, Crispy Almond-Crusted Prawns, Hokkien Mee, Salmon Avocado Toast, Strawberry Soda (M) under Drinks, Peach Orange Black Tea under Tea). Run the whole file in the Supabase SQL Editor after the original import. Categories are looked up by name, and the script skips items that already exist, so re-running it does not create duplicates. Photos are in `frontend/public/images/menu`.
+
 ## Categories
 
 | category_id | name | items |
