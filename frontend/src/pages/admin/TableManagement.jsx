@@ -28,10 +28,21 @@ function convertTable(record) {
   };
 }
 
+// Printed QR codes must open the public site, not the computer that printed them.
+// Set VITE_PUBLIC_SITE_URL (e.g. https://scander.pages.dev) when deploying.
+const PUBLIC_SITE_URL = import.meta.env.VITE_PUBLIC_SITE_URL || window.location.origin;
+
+function isPrivateAddress(url) {
+  const host = new URL(url).hostname;
+  return host === 'localhost' || host === '127.0.0.1' || host === '[::1]'
+    || /^10\./.test(host) || /^192\.168\./.test(host)
+    || /^172\.(1[6-9]|2\d|3[01])\./.test(host) || host.endsWith('.local');
+}
+
 function getTableUrl(table) {
   const url = new URL(
     '/customer/menu',
-    window.location.origin
+    PUBLIC_SITE_URL
   );
 
   // Keep the existing table parameter for compatibility.
@@ -253,10 +264,13 @@ function TableQRCodeDialog({ table, onClose }) {
             and place your order.
           </p>
 
-          <span className="a-qr-demo-notice">
-            Customer QR validation
-            pending integration
-          </span>
+          {isPrivateAddress(url) && (
+            <span className="a-qr-demo-notice" role="note">
+              Test only: this QR opens {new URL(url).host}, which works only on
+              the same Wi-Fi while this computer is running. Print table QR
+              codes from the hosted site.
+            </span>
+          )}
         </div>
 
         <div className="a-qr-link">

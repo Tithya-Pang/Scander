@@ -13,7 +13,11 @@ const app = express();
 // Global middleware
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL,
+    // One or more comma-separated site addresses, e.g. https://scander.pages.dev
+    origin: (process.env.FRONTEND_URL || "")
+      .split(",")
+      .map((value) => value.trim().replace(/\/+$/, ""))
+      .filter(Boolean),
   })
 );
 
