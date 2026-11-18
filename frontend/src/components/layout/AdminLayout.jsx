@@ -9,6 +9,7 @@ import {
 } from 'react-router-dom';
 
 import Icon from '../common/Icon';
+import BrandLogo from '../common/BrandLogo';
 
 // ==========================================
 // ADMIN NAVIGATION
@@ -169,17 +170,8 @@ export default function AdminLayout() {
           className="a-brand"
           onClick={() => setSidebarOpen(false)}
         >
-          <span className="a-brand-mark">
-            <Icon name="coffee" size={27} />
-          </span>
-
-          <span className="a-brand-text">
-            <strong>
-              Gather Grounds<span>.</span>
-            </strong>
-
-            <small>Admin Workspace</small>
-          </span>
+          <BrandLogo className="a-logo" />
+          <small className="a-brand-label">Admin Workspace</small>
         </Link>
 
         {/* Restaurant workspace label */}

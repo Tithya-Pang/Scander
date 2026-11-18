@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 
 import Icon from '../../components/common/Icon';
+import BrandLogo from '../../components/common/BrandLogo';
 
 import {
   getAdminTables,
@@ -232,17 +233,7 @@ function TableQRCodeDialog({ table, onClose }) {
 
         <div className="a-qr-content">
           <div className="a-qr-brand">
-            <span className="a-qr-brand-icon">
-              <Icon
-                name="coffee"
-                size={22}
-              />
-            </span>
-
-            <strong>
-              Gather Grounds
-              <span>.</span>
-            </strong>
+            <BrandLogo className="a-qr-logo" />
           </div>
 
           <div className="a-qr-paper">

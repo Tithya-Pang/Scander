@@ -29,6 +29,16 @@ Additional user-supplied menu photos:
 - `matcha-coconut-smoothie.png`: Matcha Coconut Smoothie (M).
 - `hot-matcha-latte.png`: Hot Matcha Latte (M).
 
+Second batch of user-supplied menu photos (converted to JPG, max 800px):
+- `korean-spicy-fried-chicken.jpg`: Korean Spicy Fried Chicken.
+- `crispy-chicken-karaage.jpg`: Crispy Chicken Karaage.
+- `almond-crusted-prawns.jpg`: Crispy Almond-Crusted Prawns.
+- `hokkien-mee.jpg`: Hokkien Mee.
+- `salmon-avocado-toast.jpg`: Salmon Avocado Toast.
+- `strawberry-soda.jpg`: Strawberry Soda (M).
+- `peach-orange-black-tea.jpg`: Peach Orange Black Tea.
+- `longan-cacao-smoothie.jpg`: Longan Cacao Smoothie (M).
+
 Additional user-supplied menu photos:
 - `crispy-chicken-sandwich.png`: Crispy Chicken Sandwich.
 - `grilled-steak-salmon-with-fries.png`: Grilled Steak Salmon With Fries.
@@ -36,3 +46,17 @@ Additional user-supplied menu photos:
 - `loklak-pizza.png`: LokLak Pizza.
 - `hot-cappuccino.png`: Hot Cappuccino.
 - `shrimp-paste-fried-rice.png`: Shrimp Paste Fried Rice.
+
+Batch 3 user-supplied menu photos:
+- `iced-cacao.jpg`: Iced Cacao.
+- `lychee-rose-jasmine-tea.jpg`: Lychee Rose Jasmine Tea.
+- `chia-cacao-coconut-smoothie.jpg`: Chia Cacao Coconut Smoothie (M).
+- `rambutan-pineapple-jasmine-tea.jpg`: Rambutan Pineapple Jasmine Tea.
+- `lot-cha.jpg`: Lot Cha.
+- `seafood-noodle-soup.jpg`: Seafood Noodle Soup.
+- `witch-gaze.jpg`: Witch Gaze.
+- `crispy-shrimp-toast-bites.jpg`: Crispy Shrimp Toast Bites.
+- `loaded-cheesy-fries.jpg`: Loaded Cheesy Fries.
+- `beef-lasagna.jpg`: Beef Lasagna.
+- `palm-latte.jpg`: Palm Latte.
+- `mango-passion-glow.jpg`: Mango Passion Glow.

@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { CartProvider, useCart } from '../../context/CartContext';
 import OrderPanel from '../customer/OrderPanel';
 import Icon from '../common/Icon';
+import BrandLogo from '../common/BrandLogo';
 import useCustomerTable from '../../hooks/useCustomerTable';
 
 function CustomerShell() {
@@ -14,8 +15,8 @@ function CustomerShell() {
   const showPanel = pathname === '/customer/menu';
   return <div className={`customer-shell${showPanel ? '' : ' customer-shell-no-panel'}`}>
     <aside className="customer-sidebar">
-      <Link to={{ pathname: '/customer/menu', search }} className="customer-brand"><span className="coffee-mark"><Icon name="coffee" size={28}/></span><span><strong>Gather Grounds<span>.</span></strong><small>Dine-in Order</small></span></Link>
-      <div className="table-card"><span className="table-icon"><Icon name="menu"/></span><div><span>YOUR TABLE</span><strong>{tableSession.loading ? 'Verifying table…' : table ? `Table #${table}` : 'Scan your table QR'}</strong></div></div>
+      <Link to={{ pathname: '/customer/menu', search }} className="customer-brand"><BrandLogo className="customer-logo"/><small>Dine-in Order</small></Link>
+      <div className="table-card"><span className="table-icon"><Icon name="table"/></span><div><span>YOUR TABLE</span><strong>{tableSession.loading ? 'Verifying table…' : table ? `Table #${table}` : 'Scan your table QR'}</strong></div></div>
       <nav aria-label="Customer navigation">{links.map(([to, icon, label]) => <NavLink key={to} to={{ pathname: to, search }} className={({ isActive }) => `customer-nav-link${isActive ? ' active' : ''}`}><Icon name={icon}/>{label}{label === 'Cart' && count > 0 && <span className="cart-count">{count}</span>}{label === 'Order Status' && <span className="status-dot"/>}</NavLink>)}</nav>
       <div className="customer-sidebar-footer"><p>“Good food brings people<br/>together.”</p><span/></div>
     </aside>

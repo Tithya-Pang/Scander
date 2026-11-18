@@ -8,6 +8,7 @@ import {
   clearStaffSession,
 } from "../../services/authSession";
 import "../../styles/login.css";
+import BrandLogo from "../../components/common/BrandLogo";
 
 // ----------------------------------------
 // Existing authentication helpers
@@ -182,13 +183,7 @@ export default function Login() {
         </Link>
 
         <div className="gg-login-visual-content">
-          <div className="gg-login-visual-mark">
-            <span>GG</span>
-          </div>
-
-          <p className="gg-login-visual-kicker">
-            GATHER GROUNDS
-          </p>
+          <BrandLogo variant="light" className="gg-login-visual-logo" />
 
           <h2>
             Great service starts
@@ -218,7 +213,7 @@ export default function Login() {
       <section className="gg-login-panel">
         <div className="gg-login-panel-top">
           <Link to="/" className="gg-login-mobile-brand">
-            Gather Grounds<span>.</span>
+            <BrandLogo className="gg-login-mobile-logo" />
           </Link>
 
           <span className="gg-login-staff-tag">

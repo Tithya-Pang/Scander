@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { KitchenProvider, useKitchen } from '../../context/KitchenContext';
 import { clearStaffSession } from '../../services/authSession';
 import Icon from '../common/Icon';
+import BrandLogo from '../common/BrandLogo';
 
 const links = [['/kitchen', 'utensils', 'Kitchen Queue', true], ['/kitchen/history', 'clock', 'Order History', false], ['/kitchen/settings', 'settings', 'Settings', true]];
 
@@ -11,7 +12,7 @@ function KitchenShell() {
   const { name, email } = settings.profile;
   return <div className="kitchen-shell" data-theme={settings.theme}>
     <aside className="k-sidebar">
-      <Link to="/kitchen" className="k-brand"><span className="k-brand-mark"><Icon name="coffee" size={28}/></span><span><strong>Gather Grounds<span>.</span></strong><small>Kitchen Staff</small></span></Link>
+      <Link to="/kitchen" className="k-brand"><BrandLogo className="k-logo"/><small>Kitchen Staff</small></Link>
       <nav aria-label="Kitchen navigation">{links.map(([to, icon, label, end]) => <NavLink key={to} to={to} end={end} className={({ isActive }) => `k-nav-link${isActive ? ' active' : ''}`}><Icon name={icon}/>{label}</NavLink>)}</nav>
       <div className="k-sidebar-footer">
         <div className="k-profile"><span className="k-avatar"><Icon name="user" size={20}/></span><span><strong>{name}</strong><small>{email}</small></span></div>
