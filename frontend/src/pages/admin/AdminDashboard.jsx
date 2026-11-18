@@ -272,10 +272,10 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <span className="a-dashboard-demo">
+        {/* <span className="a-dashboard-demo">
             <Icon name="clock" size={16} />
             Live order statistics · Other sections in preview
-        </span>
+        </span> */}
       </header>
 
       {error && (

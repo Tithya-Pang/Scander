@@ -1,11 +1,14 @@
-
-import { useEffect, useState } from 'react';
-import Icon from '../../components/common/Icon';
+import { useEffect, useState } from "react";
+import Icon from "../../components/common/Icon";
 
 import {
   getAdminOrders,
   getAdminOrderDetails,
-} from '../../services/adminOrderService';
+} from "../../services/adminOrderService";
+
+import {
+  getMenuItems,
+} from "../../services/adminMenuService";
 
 // ==========================================
 // CONSTANTS
@@ -14,89 +17,86 @@ import {
 const PAGE_SIZE = 10;
 
 const statusOptions = [
-  ['all', 'All Statuses'],
-  ['RECEIVED', 'Received'],
-  ['PREPARING', 'Preparing'],
-  ['READY', 'Ready'],
-  ['SERVED', 'Served'],
-  ['CANCELLED', 'Cancelled'],
+  ["all", "All Statuses"],
+  ["RECEIVED", "Received"],
+  ["PREPARING", "Preparing"],
+  ["READY", "Ready"],
+  ["SERVED", "Served"],
+  ["CANCELLED", "Cancelled"],
 ];
 
 const typeOptions = [
-  ['all', 'All Order Types'],
-  ['dine-in', 'Dine-in'],
-  ['takeaway', 'Takeaway'],
+  ["all", "All Order Types"],
+  ["dine-in", "Dine-in"],
+  ["takeaway", "Takeaway"],
 ];
 
 const statusLabels = {
-  RECEIVED: 'Received',
-  PREPARING: 'Preparing',
-  READY: 'Ready',
-  SERVED: 'Served',
-  CANCELLED: 'Cancelled',
+  RECEIVED: "Received",
+  PREPARING: "Preparing",
+  READY: "Ready",
+  SERVED: "Served",
+  CANCELLED: "Cancelled",
 };
 
 const statusTones = {
-  RECEIVED: 'received',
-  PREPARING: 'preparing',
-  READY: 'ready',
-  SERVED: 'completed',
-  CANCELLED: 'cancelled',
+  RECEIVED: "received",
+  PREPARING: "preparing",
+  READY: "ready",
+  SERVED: "completed",
+  CANCELLED: "cancelled",
 };
 
 // ==========================================
-// HELPER FUNCTIONS
+// HELPERS
 // ==========================================
 
 function money(value) {
-  if (value == null) return '—';
-
+  if (value == null) return "—";
   return `$${Number(value).toFixed(2)}`;
 }
 
 function normalizeStatus(value) {
-  return String(value || '').toUpperCase();
+  return String(value || "").toUpperCase();
 }
 
 function formatDateTime(value) {
-  if (!value) return 'Date unavailable';
+  if (!value) return "Date unavailable";
 
   const date = new Date(value);
 
   if (Number.isNaN(date.getTime())) {
-    return 'Date unavailable';
+    return "Date unavailable";
   }
 
-  return date.toLocaleString('en-US', {
-    timeZone: 'Asia/Phnom_Penh',
-    dateStyle: 'short',
-    timeStyle: 'short',
+  return date.toLocaleString("en-US", {
+    timeZone: "Asia/Phnom_Penh",
+    dateStyle: "short",
+    timeStyle: "short",
   });
 }
 
 function getOrderType(order) {
   const type = String(
-    order.order_type || order.type || ''
+    order.order_type || order.type || ""
   ).toLowerCase();
 
-  if (type === 'takeaway') {
-    return 'takeaway';
-  }
+  if (type === "takeaway") return "takeaway";
 
   if (
-    type === 'dine-in' ||
-    type === 'dine_in' ||
+    type === "dine-in" ||
+    type === "dine_in" ||
     order.table_id != null
   ) {
-    return 'dine-in';
+    return "dine-in";
   }
 
-  return 'unknown';
+  return "unknown";
 }
 
 function preparedCount(items) {
   return items.filter(item =>
-    ['READY', 'SERVED'].includes(
+    ["READY", "SERVED"].includes(
       normalizeStatus(item.status)
     )
   ).length;
@@ -110,6 +110,79 @@ function totalDishes(items) {
 }
 
 // ==========================================
+// REUSABLE DISH IMAGE
+// ==========================================
+
+function DishImage({
+  src,
+  name,
+  size = "small",
+}) {
+  const [failed, setFailed] = useState(false);
+
+  const className =
+    size === "large"
+      ? "a-order-detail-thumbnail"
+      : "a-orders-dish-thumb";
+
+  return (
+    <span
+      className={className}
+      title={name || "Menu item"}
+    >
+      {src && !failed ? (
+        <img
+          src={src}
+          alt={name || "Menu item"}
+          loading="lazy"
+          onError={() => setFailed(true)}
+        />
+      ) : (
+        <Icon name="utensils" size={size === "large" ? 22 : 16} />
+      )}
+    </span>
+  );
+}
+
+// ==========================================
+// FIRST THREE ORDER IMAGES
+// ==========================================
+
+function OrderImagePreview({ items }) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return (
+      <div className="a-orders-dish-images">
+        <DishImage name="No image available" />
+      </div>
+    );
+  }
+
+  const visibleItems = items.slice(0, 3);
+  const remaining = Math.max(0, items.length - 3);
+
+  return (
+    <div className="a-orders-dish-images">
+      {visibleItems.map((item, index) => (
+        <DishImage
+          key={item.order_item_id ?? index}
+          src={item.image_url}
+          name={item.item_name}
+        />
+      ))}
+
+      {remaining > 0 && (
+        <span
+          className="a-orders-image-more"
+          title={`${remaining} more dish lines`}
+        >
+          +{remaining}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// ==========================================
 // ORDER DETAILS POPUP
 // ==========================================
 
@@ -119,43 +192,34 @@ function DetailsModal({ order, onClose }) {
     : [];
 
   const status = normalizeStatus(order.status);
+  const prepared = preparedCount(items);
+
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === "Escape") onClose();
+    }
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
 
   return (
     <div
+      className="a-order-preview-overlay"
       onClick={onClose}
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 1000,
-        background: 'rgba(15, 23, 42, 0.55)',
-        display: 'grid',
-        placeItems: 'center',
-        padding: 18,
-      }}
     >
       <section
         role="dialog"
         aria-modal="true"
         aria-labelledby="admin-order-detail-title"
-        className="card"
+        className="card a-order-detail"
         onClick={event => event.stopPropagation()}
-        style={{
-          width: '100%',
-          maxWidth: 650,
-          maxHeight: '85vh',
-          overflowY: 'auto',
-          padding: 24,
-        }}
       >
         {/* HEADER */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: 16,
-          }}
-        >
+        <div className="a-order-detail-header">
           <div>
             <span className="eyebrow">
               ORDER DETAILS
@@ -165,6 +229,10 @@ function DetailsModal({ order, onClose }) {
               {order.order_number ||
                 `#${order.order_id}`}
             </h2>
+
+            <p>
+              Placed {formatDateTime(order.ordered_at)}
+            </p>
           </div>
 
           <button
@@ -177,141 +245,202 @@ function DetailsModal({ order, onClose }) {
         </div>
 
         {/* ORDER INFORMATION */}
-        <div style={{ marginTop: 20 }}>
-          <p>
-            <strong>Status: </strong>
-            {statusLabels[status] ||
-              order.status ||
-              'Unknown'}
-          </p>
+        <div className="a-order-detail-meta">
+          <div>
+            <small>ORDER STATUS</small>
+            <strong>
+              {statusLabels[status] ||
+                status ||
+                "Unknown"}
+            </strong>
+          </div>
 
-          <p>
-            <strong>Table: </strong>
-            {order.table_id != null
-              ? `Table ID ${order.table_id}`
-              : 'Not specified'}
-          </p>
+          <div>
+            <small>TABLE / TYPE</small>
+            <strong>
+              {getOrderType(order) === "takeaway"
+                ? "Takeaway"
+                : order.table_id != null
+                  ? `Table ID ${order.table_id}`
+                  : "Not specified"}
+            </strong>
+          </div>
 
-          <p>
-            <strong>Placed At: </strong>
-            {formatDateTime(order.ordered_at)}
-          </p>
-
-          <p>
-            <strong>Total Amount: </strong>
-            {money(order.total_amount)}
-          </p>
-
-          {order.customer_note && (
-            <p>
-              <strong>Customer Note: </strong>
-              {order.customer_note}
-            </p>
-          )}
+          <div>
+            <small>TOTAL AMOUNT</small>
+            <strong>
+              {money(order.total_amount)}
+            </strong>
+          </div>
         </div>
 
-        {/* ORDER ITEMS */}
-        <div style={{ marginTop: 20 }}>
-          <h3>Ordered Dishes</h3>
+        {/* PREPARATION PROGRESS */}
+        <div className="a-order-detail-progress">
+          <div>
+            <strong>Preparation Progress</strong>
+            <span>
+              {prepared} / {items.length} dish lines
+            </span>
+          </div>
 
+          <div className="a-orders-progress-track">
+            <span
+              style={{
+                width: `${
+                  items.length > 0
+                    ? (prepared / items.length) * 100
+                    : 0
+                }%`,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* DISHES */}
+        <h3 className="a-order-detail-section">
+          Ordered Dishes
+        </h3>
+
+        <div className="a-order-detail-items">
           {items.length === 0 ? (
             <p className="muted">
               No dishes found for this order.
             </p>
           ) : (
-            items.map(item => {
+            items.map((item, index) => {
               const itemStatus = normalizeStatus(
                 item.status
               );
 
               return (
                 <div
-                  key={item.order_item_id}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    gap: 18,
-                    padding: '12px 0',
-                    borderBottom:
-                      '1px solid #e5e7eb',
-                  }}
+                  className="a-order-detail-item"
+                  key={item.order_item_id ?? index}
                 >
-                  <div>
+                  <DishImage
+                    key={item.image_url || "no-image"}
+                    src={item.image_url}
+                    name={item.item_name}
+                    size="large"
+                  />
+
+                  <div className="a-order-detail-item-info">
                     <strong>
                       {item.item_name ||
-                        'Unnamed dish'}
+                        "Unnamed dish"}
                     </strong>
 
-                    <div className="muted">
+                    <small>
                       Quantity: {item.quantity}
-                    </div>
+                    </small>
 
-                    <div className="muted">
-                      Status:{' '}
+                    <span
+                      className={`a-dish-status ${
+                        itemStatus === "RECEIVED"
+                          ? "a-dish-pending"
+                          : itemStatus === "PREPARING"
+                            ? "a-dish-preparing"
+                            : itemStatus === "READY"
+                              ? "a-dish-ready"
+                              : itemStatus === "SERVED"
+                                ? "a-dish-served"
+                                : "a-dish-pending"
+                      }`}
+                    >
                       {statusLabels[itemStatus] ||
-                        item.status ||
-                        'Unknown'}
-                    </div>
+                        itemStatus ||
+                        "Unknown"}
+                    </span>
 
                     {item.special_instruction && (
-                      <div className="muted">
+                      <small>
                         Note: {item.special_instruction}
-                      </div>
+                      </small>
                     )}
                   </div>
 
-                  <strong>
-                    {money(item.subtotal)}
-                  </strong>
+                  <div className="a-order-detail-item-price">
+                    <strong>
+                      {money(item.subtotal)}
+                    </strong>
+
+                    <small>
+                      {money(item.unit_price)} each
+                    </small>
+                  </div>
                 </div>
               );
             })
           )}
         </div>
 
-        {/* PREPARATION SUMMARY */}
-        <p style={{ marginTop: 18 }}>
-          <strong>Preparation: </strong>
-          {preparedCount(items)} of {items.length}{' '}
-          dish lines ready or served
-        </p>
+        {/* CUSTOMER NOTE */}
+        {order.customer_note && (
+          <div className="admin-order-note">
+            <strong>Customer Note</strong>
+            <p>{order.customer_note}</p>
+          </div>
+        )}
+
+        {/* TOTAL */}
+        <div className="a-order-detail-totals">
+          <div>
+            <span>Total dishes</span>
+            <strong>{totalDishes(items)}</strong>
+          </div>
+
+          <div className="a-order-detail-grand">
+            <span>Order Total</span>
+            <strong>
+              {money(order.total_amount)}
+            </strong>
+          </div>
+        </div>
+
+        <div className="a-order-detail-footer">
+          <span>
+            <Icon name="checkCircle" size={16} />
+            Order information from Scander
+          </span>
+
+          <button
+            type="button"
+            className="btn btn-outline btn-small"
+            onClick={onClose}
+          >
+            Close Details
+          </button>
+        </div>
       </section>
     </div>
   );
 }
 
 // ==========================================
-// ADMIN ORDER MANAGEMENT PAGE
+// ORDER MANAGEMENT PAGE
 // ==========================================
 
 export default function OrderManagement() {
-  // REAL ORDER DATA
   const [orders, setOrders] = useState([]);
   const [pagination, setPagination] = useState(null);
 
-  // LOADING AND ERROR
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
-  // PAGINATION
   const [page, setPage] = useState(1);
-
-  // REFRESH TRIGGER
   const [refresh, setRefresh] = useState(0);
 
-  // FILTERS
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] =
-    useState('all');
+    useState("all");
   const [typeFilter, setTypeFilter] =
-    useState('all');
+    useState("all");
 
-  // ORDER DETAILS
   const [selectedOrder, setSelectedOrder] =
     useState(null);
 
   // ==========================================
-  // LOAD ORDERS FROM BACKEND
+  // LOAD ORDERS AND MENU IMAGES
   // ==========================================
 
   useEffect(() => {
@@ -319,40 +448,88 @@ export default function OrderManagement() {
 
     async function loadOrders() {
       setLoading(true);
-      setError('');
+      setError("");
 
       try {
-        // Step 1: Retrieve the list of orders.
+        // Get orders from the backend.
         const result = await getAdminOrders(
           page,
           PAGE_SIZE
         );
 
-        // Step 2: Retrieve dishes for each order.
-        const detailResults = await Promise.allSettled(
-          result.orders.map(order =>
-            getAdminOrderDetails(order.order_id)
-          )
-        );
+        // Get order details and the menu catalog.
+        // Menu images are optional: failure to load
+        // images should not hide the orders.
+        const [detailsResult, menuResult] =
+          await Promise.all([
+            Promise.allSettled(
+              result.orders.map(order =>
+                getAdminOrderDetails(order.order_id)
+              )
+            ),
+            Promise.allSettled([
+              getMenuItems(),
+            ]),
+          ]);
 
         if (ignore) return;
 
-        // Step 3: Combine order information
-        // with its individual dishes.
+        // Create lookup: menu item ID -> image URL
+        const imageByItemId = new Map();
+
+        const menuResponse = menuResult[0];
+
+        if (
+          menuResponse.status === "fulfilled" &&
+          Array.isArray(menuResponse.value)
+        ) {
+          menuResponse.value.forEach(item => {
+            if (
+              item.item_id != null &&
+              item.image_url
+            ) {
+              imageByItemId.set(
+                String(item.item_id),
+                item.image_url
+              );
+            }
+          });
+        } else {
+          console.warn(
+            "Menu images could not be loaded."
+          );
+        }
+
+        // Combine orders, dishes and images.
         const enrichedOrders = result.orders.map(
           (order, index) => {
-            const detailResult = detailResults[index];
+            const detailResult = detailsResult[index];
 
             const detailAvailable =
-              detailResult.status === 'fulfilled';
+              detailResult.status === "fulfilled";
+
+            const detailItems = detailAvailable
+              ? detailResult.value.items
+              : null;
+
+            const enrichedItems = Array.isArray(
+              detailItems
+            )
+              ? detailItems.map(item => ({
+                  ...item,
+
+                  image_url:
+                    item.image_url ||
+                    imageByItemId.get(
+                      String(item.item_id)
+                    ) ||
+                    null,
+                }))
+              : null;
 
             return {
               ...order,
-
-              items: detailAvailable
-                ? detailResult.value.items
-                : null,
-
+              items: enrichedItems,
               detailAvailable,
             };
           }
@@ -363,7 +540,7 @@ export default function OrderManagement() {
       } catch (err) {
         if (!ignore) {
           console.error(
-            'Failed to load Admin Orders:',
+            "Failed to load Admin Orders:",
             err
           );
 
@@ -371,7 +548,7 @@ export default function OrderManagement() {
           setPagination(null);
 
           setError(
-            err.message || 'Unable to load orders.'
+            err.message || "Unable to load orders."
           );
         }
       } finally {
@@ -402,19 +579,13 @@ export default function OrderManagement() {
   orders.forEach(order => {
     const status = normalizeStatus(order.status);
 
-    if (status === 'RECEIVED') {
+    if (status === "RECEIVED") {
       counts.received++;
-    }
-
-    if (status === 'PREPARING') {
+    } else if (status === "PREPARING") {
       counts.preparing++;
-    }
-
-    if (status === 'READY') {
+    } else if (status === "READY") {
       counts.ready++;
-    }
-
-    if (status === 'SERVED') {
+    } else if (status === "SERVED") {
       counts.completed++;
     }
   });
@@ -423,7 +594,7 @@ export default function OrderManagement() {
   // SEARCH AND FILTER
   // ==========================================
 
-  // Filters apply to the currently loaded page.
+  // Filters affect the current loaded page.
   const filteredOrders = orders.filter(order => {
     const query = search.trim().toLowerCase();
 
@@ -434,22 +605,22 @@ export default function OrderManagement() {
       )
         .toLowerCase()
         .includes(query) ||
-      `table ${order.table_id ?? ''}`.includes(
+      `table ${order.table_id ?? ""}`.includes(
         query
       ) ||
       (order.items || []).some(item =>
-        String(item.item_name || '')
+        String(item.item_name || "")
           .toLowerCase()
           .includes(query)
       );
 
     const matchesStatus =
-      statusFilter === 'all' ||
+      statusFilter === "all" ||
       normalizeStatus(order.status) ===
         statusFilter;
 
     const matchesType =
-      typeFilter === 'all' ||
+      typeFilter === "all" ||
       getOrderType(order) === typeFilter;
 
     return (
@@ -476,19 +647,15 @@ export default function OrderManagement() {
     )
   );
 
-  // ==========================================
-  // BUTTON FUNCTIONS
-  // ==========================================
-
   function refreshOrders() {
     setSelectedOrder(null);
     setRefresh(previous => previous + 1);
   }
 
   function resetFilters() {
-    setSearch('');
-    setStatusFilter('all');
-    setTypeFilter('all');
+    setSearch("");
+    setStatusFilter("all");
+    setTypeFilter("all");
   }
 
   // ==========================================
@@ -497,7 +664,6 @@ export default function OrderManagement() {
 
   return (
     <section className="a-orders-page">
-
       {/* HEADER */}
       <header className="a-orders-heading">
         <div>
@@ -528,34 +694,34 @@ export default function OrderManagement() {
       <div className="a-orders-stats">
         {[
           {
-            label: 'Orders on Page',
+            label: "Orders on Page",
             value: orders.length,
-            icon: 'bag',
-            tone: 'slate',
+            icon: "bag",
+            tone: "slate",
           },
           {
-            label: 'Received',
+            label: "Received",
             value: counts.received,
-            icon: 'inbox',
-            tone: 'blue',
+            icon: "inbox",
+            tone: "blue",
           },
           {
-            label: 'Preparing',
+            label: "Preparing",
             value: counts.preparing,
-            icon: 'flame',
-            tone: 'amber',
+            icon: "flame",
+            tone: "amber",
           },
           {
-            label: 'Ready to Serve',
+            label: "Ready to Serve",
             value: counts.ready,
-            icon: 'cloche',
-            tone: 'green',
+            icon: "cloche",
+            tone: "green",
           },
           {
-            label: 'Completed',
+            label: "Completed",
             value: counts.completed,
-            icon: 'checkCircle',
-            tone: 'purple',
+            icon: "checkCircle",
+            tone: "purple",
           },
         ].map(stat => (
           <article
@@ -564,49 +730,38 @@ export default function OrderManagement() {
           >
             <div>
               <span>{stat.label}</span>
-              <Icon
-                name={stat.icon}
-                size={21}
-              />
+              <Icon name={stat.icon} size={21} />
             </div>
 
             <strong>
               {loading
-                ? '...'
+                ? "..."
                 : error
-                  ? '—'
+                  ? "—"
                   : stat.value}
             </strong>
           </article>
         ))}
       </div>
 
-      {/* ORDER TABLE */}
+      {/* ORDER TABLE PANEL */}
       <section className="card a-orders-panel">
-
-        {/* SECTION HEADER */}
         <div className="a-orders-panel-heading">
           <div>
             <h2>All Orders</h2>
-
             <p>
               {loading
-                ? 'Loading orders...'
+                ? "Loading orders..."
                 : `${filteredOrders.length} matching orders on this page`}
             </p>
           </div>
-
-          <span className="a-orders-readonly">
-            <Icon name="lock" size={15} />
-            Read-only monitoring
-          </span>
         </div>
 
-        {/* ERROR MESSAGE */}
+        {/* ERROR */}
         {error && (
           <p
             role="alert"
-            style={{ color: '#b42318' }}
+            className="admin-image-error"
           >
             {error}
 
@@ -644,10 +799,7 @@ export default function OrderManagement() {
           >
             {statusOptions.map(
               ([value, label]) => (
-                <option
-                  key={value}
-                  value={value}
-                >
+                <option key={value} value={value}>
                   {label}
                 </option>
               )
@@ -663,10 +815,7 @@ export default function OrderManagement() {
           >
             {typeOptions.map(
               ([value, label]) => (
-                <option
-                  key={value}
-                  value={value}
-                >
+                <option key={value} value={value}>
                   {label}
                 </option>
               )
@@ -684,7 +833,7 @@ export default function OrderManagement() {
           </button>
         </div>
 
-        {/* ORDER TABLE */}
+        {/* TABLE */}
         <div className="table-scroll">
           <table className="a-orders-table">
             <thead>
@@ -721,7 +870,6 @@ export default function OrderManagement() {
 
                   return (
                     <tr key={order.order_id}>
-
                       {/* ORDER NUMBER */}
                       <td>
                         <div className="a-orders-id">
@@ -738,59 +886,46 @@ export default function OrderManagement() {
                         </div>
                       </td>
 
-                      {/* TABLE NUMBER */}
+                      {/* TABLE */}
                       <td>
                         <div className="a-orders-table-info">
                           <strong>
                             {getOrderType(order) ===
-                            'takeaway'
-                              ? 'Takeaway'
+                            "takeaway"
+                              ? "Takeaway"
                               : order.table_id == null
-                                ? 'Not specified'
+                                ? "Not specified"
                                 : `Table ID ${order.table_id}`}
                           </strong>
 
                           <small>
                             {getOrderType(order) ===
-                            'unknown'
-                              ? 'Type not specified'
+                            "unknown"
+                              ? "Type not specified"
                               : getOrderType(order) ===
-                                  'takeaway'
-                                ? 'Pickup order'
-                                : 'Dine-in'}
+                                  "takeaway"
+                                ? "Pickup order"
+                                : "Dine-in"}
                           </small>
                         </div>
                       </td>
 
-                      {/* ORDERED DISHES */}
+                      {/* FOOD IMAGES */}
                       <td>
                         <div className="a-orders-dishes">
-                          <div className="a-orders-dish-images">
-                            {(items || [])
-                              .slice(0, 3)
-                              .map(item => (
-                                <span
-                                  key={
-                                    item.order_item_id
-                                  }
-                                >
-                                  <Icon
-                                    name="utensils"
-                                    size={16}
-                                  />
-                                </span>
-                              ))}
-                          </div>
+                          <OrderImagePreview
+                            items={items}
+                          />
 
                           <small>
                             {items
                               ? `${totalDishes(items)} dishes`
-                              : 'Items unavailable'}
+                              : "Items unavailable"}
                           </small>
                         </div>
                       </td>
 
-                      {/* PREPARATION PROGRESS */}
+                      {/* PREPARATION */}
                       <td>
                         <div className="a-orders-progress">
                           {items ? (
@@ -801,9 +936,7 @@ export default function OrderManagement() {
                                 aria-label={`Order ${order.order_id} preparation progress`}
                                 aria-valuemin={0}
                                 aria-valuemax={lines}
-                                aria-valuenow={
-                                  prepared
-                                }
+                                aria-valuenow={prepared}
                               >
                                 <span
                                   style={{
@@ -825,30 +958,28 @@ export default function OrderManagement() {
                         </div>
                       </td>
 
-                      {/* TOTAL AMOUNT */}
+                      {/* AMOUNT */}
                       <td>
                         <strong className="a-orders-price">
-                          {money(
-                            order.total_amount
-                          )}
+                          {money(order.total_amount)}
                         </strong>
                       </td>
 
-                      {/* ORDER STATUS */}
+                      {/* STATUS */}
                       <td>
                         <span
                           className={`a-order-status a-order-${
                             statusTones[status] ||
-                            'received'
+                            "received"
                           }`}
                         >
                           {statusLabels[status] ||
                             status ||
-                            'Unknown'}
+                            "Unknown"}
                         </span>
                       </td>
 
-                      {/* DETAILS BUTTON */}
+                      {/* DETAILS */}
                       <td>
                         <button
                           type="button"
@@ -858,7 +989,7 @@ export default function OrderManagement() {
                           }
                           title={
                             !order.detailAvailable
-                              ? 'Could not load order details. Refresh and try again.'
+                              ? "Could not load order details."
                               : undefined
                           }
                           onClick={() =>
@@ -866,7 +997,6 @@ export default function OrderManagement() {
                           }
                         >
                           Details
-
                           <Icon
                             name="chevronRight"
                             size={15}
@@ -884,12 +1014,12 @@ export default function OrderManagement() {
                     colSpan={7}
                     className="admin-empty"
                   >
-                    Loading real orders and dishes...
+                    Loading orders and dishes...
                   </td>
                 </tr>
               )}
 
-              {/* EMPTY STATE */}
+              {/* EMPTY */}
               {!loading &&
                 !error &&
                 filteredOrders.length === 0 && (
@@ -904,7 +1034,7 @@ export default function OrderManagement() {
                   </tr>
                 )}
 
-              {/* ERROR STATE */}
+              {/* ERROR */}
               {!loading && error && (
                 <tr>
                   <td
@@ -922,15 +1052,15 @@ export default function OrderManagement() {
         {/* PAGINATION */}
         <div className="a-orders-pagination">
           <span>
-            Showing{' '}
+            Showing{" "}
             {totalOrders
               ? (page - 1) * PAGE_SIZE + 1
               : 0}
-            {'–'}
+            {"–"}
             {Math.min(
               page * PAGE_SIZE,
               totalOrders
-            )}{' '}
+            )}{" "}
             of {totalOrders}
           </span>
 
@@ -943,10 +1073,7 @@ export default function OrderManagement() {
                 setPage(previous => previous - 1)
               }
             >
-              <Icon
-                name="chevronLeft"
-                size={18}
-              />
+              <Icon name="chevronLeft" size={18} />
             </button>
 
             <span>
@@ -963,24 +1090,20 @@ export default function OrderManagement() {
                 setPage(previous => previous + 1)
               }
             >
-              <Icon
-                name="chevronRight"
-                size={18}
-              />
+              <Icon name="chevronRight" size={18} />
             </button>
           </div>
         </div>
       </section>
 
-      {/* ORDER DETAILS MODAL */}
+      {/* ORDER DETAILS POPUP */}
       {selectedOrder && (
         <DetailsModal
           order={selectedOrder}
-          onClose={() =>
-            setSelectedOrder(null)
-          }
+          onClose={() => setSelectedOrder(null)}
         />
       )}
     </section>
   );
 }
+

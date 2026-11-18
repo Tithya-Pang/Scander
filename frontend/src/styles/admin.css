@@ -4619,3 +4619,231 @@
     margin-left: 0;
   }
 }
+
+
+/* ==========================================
+   CATEGORY IMAGE PREVIEWS
+   ========================================== */
+
+.admin-shell .a-category-icon {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.admin-shell .a-category-icon img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Why delete is unavailable */
+
+.admin-shell .a-category-delete-hint {
+  display: block;
+  color: #a56e20;
+  font-size: 11px;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+.admin-shell .a-catalog-delete:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+
+/* ==========================================
+   ADMIN ORDERS — REAL DISH IMAGE PREVIEWS
+   ========================================== */
+
+/* First three images displayed in each order row */
+
+.admin-shell .a-orders-dish-images {
+  display: flex;
+  align-items: center;
+  padding-left: 6px;
+  min-height: 42px;
+}
+
+.admin-shell .a-orders-dish-thumb {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  margin-left: -6px;
+  border: 2px solid #fff;
+  border-radius: 11px;
+  overflow: hidden;
+  background: #eaf3ed;
+  color: #29634d;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.admin-shell .a-orders-dish-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* +N badge when there are more than 3 item lines */
+
+.admin-shell .a-orders-dish-images .a-orders-image-more {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  height: 40px;
+  padding: 0 7px;
+  flex-shrink: 0;
+  margin-left: -4px;
+  border: 2px solid #fff;
+  border-radius: 11px;
+  background: #dfece3;
+  color: #29634d;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Keep image preview and dish count aligned */
+
+.admin-shell .a-orders-dishes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 7px;
+}
+
+.admin-shell .a-orders-dishes small {
+  font-size: 11px;
+  color: #8190a1;
+}
+
+/* Order details modal overlay */
+
+.a-order-preview-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+/* Existing order details layout improvements */
+
+.admin-shell .a-order-detail {
+  width: min(100%, 680px);
+  max-height: 90dvh;
+  overflow-y: auto;
+  padding: 28px;
+  border-radius: 19px;
+  background: #fff;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.16);
+}
+
+/* Larger dish images in details popup */
+
+.admin-shell .a-order-detail-thumbnail {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 13px;
+  overflow: hidden;
+  background: #eaf3ed;
+  color: #29634d;
+}
+
+.admin-shell .a-order-detail-thumbnail img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-shell .a-order-detail-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 15px 0;
+  border-bottom: 1px solid #edf0f3;
+}
+
+.admin-shell .a-order-detail-item-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.admin-shell .a-order-detail-item-info strong {
+  color: #192638;
+  font-size: 14px;
+}
+
+.admin-shell .a-order-detail-item-price {
+  flex-shrink: 0;
+  text-align: right;
+}
+
+.admin-shell .a-order-detail-item-price strong {
+  color: #192638;
+  font-size: 14px;
+}
+
+/* Customer note inside order detail */
+
+.admin-shell .admin-order-note {
+  margin-top: 20px;
+  padding: 16px;
+  background: #f7faf8;
+  border-radius: 12px;
+}
+
+.admin-shell .admin-order-note strong {
+  color: #192638;
+  font-size: 13px;
+}
+
+.admin-shell .admin-order-note p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #52687e;
+}
+
+/* Mobile improvements */
+
+@media (max-width: 650px) {
+  .a-order-preview-overlay {
+    padding: 12px;
+  }
+
+  .admin-shell .a-order-detail {
+    padding: 18px;
+    max-height: 95dvh;
+  }
+
+  .admin-shell .a-order-detail-item {
+    gap: 10px;
+  }
+
+  .admin-shell .a-order-detail-thumbnail {
+    width: 48px;
+    height: 48px;
+  }
+
+  .admin-shell .a-orders-dish-thumb,
+  .admin-shell .a-orders-dish-images .a-orders-image-more {
+    width: 36px;
+    min-width: 36px;
+    height: 36px;
+  }
+}

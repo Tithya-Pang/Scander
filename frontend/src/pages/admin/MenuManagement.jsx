@@ -516,10 +516,10 @@ export default function MenuManagement() {
             </p>
           </div>
 
-          <span className="a-catalog-demo">
+          {/* <span className="a-catalog-demo">
             <Icon name="file" size={15} />
             Supabase menu data
-          </span>
+          </span> */}
         </div>
 
         {/* FILTERS */}

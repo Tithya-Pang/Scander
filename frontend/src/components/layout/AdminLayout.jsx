@@ -240,7 +240,7 @@ export default function AdminLayout() {
 
           {/* Demo notice */}
 
-          <div className="a-sidebar-notice">
+          {/*<div className="a-sidebar-notice">
             <span className="a-notice-icon">
               <Icon name="checkCircle" size={18} />
             </span>
@@ -252,7 +252,7 @@ export default function AdminLayout() {
                 Sample data · No backend connected
               </small>
             </div>
-          </div>
+          </div> */}
 
           {/* Admin profile */}
 
@@ -336,10 +336,10 @@ export default function AdminLayout() {
 
             {/* Demo mode label */}
 
-            <span className="a-demo-indicator">
+            {/* <span className="a-demo-indicator">
               <span />
               Demo Mode
-            </span>
+            </span> */}
 
             {/* Switch workspace */}
 
